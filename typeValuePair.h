@@ -2,6 +2,7 @@
 #define TYPEVALUEPAIR_H
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 enum typeJSON {
@@ -13,13 +14,9 @@ enum typeJSON {
     typeNULL // NULL taken
 };
 
-struct Value {
-    std::string string;
-    double number;
-    std::unordered_map<std::string, Value> object;
-    std::vector<Value> array;
-    bool boolean;
+struct ValueJSON {
     typeJSON type;
+    std::variant<std::string, double, bool, std::unordered_map<std::string, ValueJSON>, std::vector<ValueJSON>> value;
 };
 
 class typeValuePair {

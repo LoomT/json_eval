@@ -18,6 +18,6 @@ public:
     }
 };
 
-std::unordered_map<std::string, Value> parseJSON(const std::string& filePath);
+std::unordered_map<std::string, ValueJSON> parseJSON(const std::string& filePath);
 
 #endif //JSON_EVAL_PARSE_H

@@ -6,7 +6,7 @@
 
 using namespace std;
 
-unordered_map<string, Value> parseObject(string json);
+unordered_map<string, ValueJSON> parseObject(string json);
 
 string openFile(const string& filePath) {
     ifstream in(filePath);
@@ -70,32 +70,32 @@ string parseString(const string& json) {
     throw ParseException("Missing key closing \"");
 }
 
-Value parseValue(const string& json) {
+ValueJSON parseValue(const string& json) {
     if(json[0] == 'n') {
         if(json[1] == 'u' && json[2] == 'l' && json[3] == 'l') {
-            Value value;
+            ValueJSON value;
             value.type = typeNULL;
             return value;
         }
         throw ParseException("Unexpected value type");
     }
     if(json[0] == '"') {
-        Value value;
+        ValueJSON value;
         value.type = STRING;
-        value.string = parseString(json);
+        value.value = parseString(json);
         return value;
     }
     if(json[0] == '{') {
-        Value value;
+        ValueJSON value;
         value.type = OBJECT;
-        value.object = parseObject(json);
+        value.value = parseObject(json);
         return value;
     }
     throw ParseException("Unexpected value type");
 }
 
-unordered_map<string, Value> parseObject(string json) {
-    unordered_map<string, Value> object;
+unordered_map<string, ValueJSON> parseObject(string json) { // NOLINT(*-no-recursion)
+    unordered_map<string, ValueJSON> object;
     if(json[0] != '{') throw ParseException("Missing object opening curly brace '{'");
     json = skipWS(skip(json, 1));
     while(json[0] != '}') {
@@ -103,7 +103,7 @@ unordered_map<string, Value> parseObject(string json) {
         json = skipWS(skip(json, key.size() + 2));
         if(json[0] != ':') throw ParseException("Missing ':' between key and value");
         json = skipWS(skip(json, 1));
-        Value value = parseValue(json);
+        ValueJSON value = parseValue(json);
         if(!object.insert({key, value}).second) throw ParseException("Duplicate keys");
         json = skipWS(skipValue(json));
         if(json[0] == ',') {
@@ -116,7 +116,7 @@ unordered_map<string, Value> parseObject(string json) {
     return object;
 }
 
-unordered_map<std::string, Value> parseJSON(const string& filePath) {
+unordered_map<std::string, ValueJSON> parseJSON(const string& filePath) {
     cout << openFile(filePath) << endl;
     const string json = skipWS(openFile(filePath));
     if(json.size() < 2) throw ParseException("JSON file is less than 2 characters");
