@@ -1,8 +1,9 @@
 #include "parse.h"
 #include <iostream>
 #include <fstream>
-#include <sstream>
-#include "typeValuePair.h"
+#include <stack>
+
+#include "value.h"
 
 using namespace std;
 
@@ -55,7 +56,6 @@ string skipNumber(const string& str) {
             i++;
             if(str[i] == '-' || str[i] == '+') i++;
             if(isdigit(str[i])) {
-                i++;
                 continue;
             }
             throw ParseException("Unexpected character after exponent");
@@ -63,6 +63,33 @@ string skipNumber(const string& str) {
         return &str[i];
     }
     return str;
+}
+
+string skipObject(const string& str) {
+    stack<char> braceStack;
+    braceStack.push('{');
+    bool inString = false;  // track if we are inside a string literal
+    for (size_t i = 1; i < str.size(); ++i) {
+        const char c = str[i];
+
+        if (inString) {
+            if (c == '"') inString = false;
+            else if (c == '\\') i++; // skip the next escaped char
+        } else {
+            if (c == '"') {
+                inString = true;  // starting or ending a string literal
+            } else if (c == '{') {
+                braceStack.push('{');
+            } else if (c == '}') {
+                braceStack.pop();
+                if (braceStack.empty()) {
+                    return &str[++i];  // found the matching closing brace
+                }
+            }
+        }
+    }
+
+    throw ParseException("No matching closing brace '}' found.");
 }
 
 string skipValue(const string& str) {
@@ -79,6 +106,7 @@ string skipValue(const string& str) {
     if(str[0] == 'n' || str[0] == 't') return &str[4];
     if(str[0] == 'f') return &str[5];
     if(str[0] == '-' || isdigit(str[0])) return skipNumber(str);
+    if(str[0] == '{') return skipObject(str);
 
     throw ParseException("Cant skip");
 }
@@ -170,7 +198,7 @@ unordered_map<string, ValueJSON> parseObject(string json) { // NOLINT(*-no-recur
 }
 
 unordered_map<std::string, ValueJSON> parseJSON(const string& filePath) {
-    cout << openFile(filePath) << endl;
+    cout << "Parsing this string:\n" << openFile(filePath) << endl << "End of string" << endl;
     const string json = skipWS(openFile(filePath));
     if(json.size() < 2) throw ParseException("JSON file is less than 2 characters");
     return parseObject(json);
