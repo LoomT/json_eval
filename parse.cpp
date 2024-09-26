@@ -2,8 +2,11 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include "typeValuePair.h"
 
 using namespace std;
+
+unordered_map<string, Value> parseObject(string json);
 
 string openFile(const string& filePath) {
     ifstream in(filePath);
@@ -11,13 +14,111 @@ string openFile(const string& filePath) {
         throw runtime_error{"Could not open " + filePath};
     }
     in.seekg(0, ios::end);
-    long long size = in.tellg();
+    const long long size = in.tellg();
     string buffer(size, ' ');
     in.seekg(0);
     in.read(&buffer[0], size);
     return buffer;
 }
 
-void hello() {
-    cout << "Hello world!" << endl << openFile("yep.txt") << endl;
+/**
+ *
+ * strips leading whitespace by moving the pointer on the given string
+ *
+ * @param str string to strip
+ * @return string with whitespace skipped
+ */
+string skipWS(const string& str) {
+    if(str.empty()) return str;
+    string::size_type pos = 0;
+    while(isspace(str[pos])) {
+        pos++;
+    }
+    return &str[pos];
+}
+
+string skip(const string& str, const string::size_type amount) {
+    return &str[amount];
+}
+
+string skipValue(const string& str) {
+    if(str[0] == '"') {
+        bool escaped = false;
+        for(int i = 1; i < str.size(); i++) {
+            if(str[i] == '"' && !escaped) return &str[i+1];
+
+            if(str[i] == '\\' && !escaped) escaped = true;
+            else escaped = false;
+        }
+    }
+    if(str[0] == 'n') return &str[4];
+    throw ParseException("Cant skip");
+}
+
+string parseString(const string& json) {
+    if(json[0] != '"') throw ParseException("Missing key opening \"");
+    string result;
+    bool escaped = false;
+    for(int i = 1; i < json.size(); i++) {
+        if(json[i] == '"' && !escaped) return result;
+
+        if(json[i] == '\\' && !escaped) escaped = true;
+        else escaped = false;
+
+        result += json[i];
+    }
+    throw ParseException("Missing key closing \"");
+}
+
+Value parseValue(const string& json) {
+    if(json[0] == 'n') {
+        if(json[1] == 'u' && json[2] == 'l' && json[3] == 'l') {
+            Value value;
+            value.type = typeNULL;
+            return value;
+        }
+        throw ParseException("Unexpected value type");
+    }
+    if(json[0] == '"') {
+        Value value;
+        value.type = STRING;
+        value.string = parseString(json);
+        return value;
+    }
+    if(json[0] == '{') {
+        Value value;
+        value.type = OBJECT;
+        value.object = parseObject(json);
+        return value;
+    }
+    throw ParseException("Unexpected value type");
+}
+
+unordered_map<string, Value> parseObject(string json) {
+    unordered_map<string, Value> object;
+    if(json[0] != '{') throw ParseException("Missing object opening curly brace '{'");
+    json = skipWS(skip(json, 1));
+    while(json[0] != '}') {
+        const string key = parseString(json);
+        json = skipWS(skip(json, key.size() + 2));
+        if(json[0] != ':') throw ParseException("Missing ':' between key and value");
+        json = skipWS(skip(json, 1));
+        Value value = parseValue(json);
+        if(!object.insert({key, value}).second) throw ParseException("Duplicate keys");
+        json = skipWS(skipValue(json));
+        if(json[0] == ',') {
+            json = skipWS(skip(json, 1));
+            continue;
+        } else if(json[0] != '}') {
+            throw ParseException("Missing ',' after value");
+        }
+    }
+    return object;
+}
+
+unordered_map<std::string, Value> parseJSON(const string& filePath) {
+    cout << openFile(filePath) << endl;
+    const string json = skipWS(openFile(filePath));
+    if(json.size() < 2) throw ParseException("JSON file is less than 2 characters");
+    return parseObject(json);
 }
