@@ -5,4 +5,5 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(json_eval main.cpp
         parse.cpp
-        parse.h)
+        parse.h
+        typeValuePair.h)
