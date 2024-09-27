@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "../parse.h"
-#include "../value.h"
+#include "../src/parse.h"
+#include "../src/value.h"
 
 using namespace std;
 
