@@ -113,3 +113,42 @@ TEST(Unformatted, uglyStrings) {
     const unordered_map<string, ValueJSON> result = parseJSON(filePath);
     ASSERT_EQ(3, result.size());
 }
+
+// Array
+TEST(ParseArray, simple) {
+    const string filePath = string(TEST_DATA_DIR) + "/array/simple.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_EQ(1, result.size());
+    ASSERT_TRUE(result.contains("array"));
+    const vector<ValueJSON> array = get<vector<ValueJSON>>(result.at("array").value);
+    ASSERT_EQ(3, array.size());
+    ASSERT_EQ("one", get<string>(array.at(0).value));
+    ASSERT_EQ("two", get<string>(array.at(1).value));
+    ASSERT_EQ("three", get<string>(array.at(2).value));
+}
+
+TEST(ParseArray, oneItem) {
+    const string filePath = string(TEST_DATA_DIR) + "/array/oneItem.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_TRUE(result.contains("array"));
+    const vector<ValueJSON> array = get<vector<ValueJSON>>(result.at("array").value);
+    ASSERT_EQ(1, array.size());
+    ASSERT_EQ("one", get<string>(array.at(0).value));
+}
+
+TEST(ParseArray, differentTypeItems) {
+    const string filePath = string(TEST_DATA_DIR) + "/array/differentTypeItems.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_TRUE(result.contains("array"));
+    const vector<ValueJSON> array = get<vector<ValueJSON>>(result.at("array").value);
+    ASSERT_EQ(7, array.size());
+    ASSERT_STREQ("one", get<string>(array.at(0).value).c_str());
+    ASSERT_EQ(typeNULL, array.at(1).type);
+    ASSERT_EQ(3, get<double>(array.at(2).value));
+    ASSERT_TRUE(get<bool>(array.at(3).value));
+    ASSERT_FALSE(get<bool>(array.at(4).value));
+    const unordered_map<string, ValueJSON> obj = get<unordered_map<string, ValueJSON>>(array.at(5).value);
+    ASSERT_EQ(0, obj.size());
+    const vector<ValueJSON> vect = get<vector<ValueJSON>>(array.at(6).value);
+    ASSERT_EQ(0, vect.size());
+}
