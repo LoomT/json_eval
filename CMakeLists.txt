@@ -31,7 +31,7 @@ add_executable(tests
         value.cpp
         tests/parseTest.cpp)
 
-target_compile_definitions(tests PUBLIC TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/resources")
+target_compile_definitions(tests PUBLIC TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/parseJSON")
 
 target_link_libraries(tests GTest::gtest_main)
 
