@@ -93,8 +93,22 @@ TEST(ParseEscapedChar, escapedLastQuoteInKey) {
     ASSERT_THROW(parseJSON(filePath), ParseException);
 }
 
+// Edge cases
+TEST(EdgeCase, emptyKey) {
+    const string filePath = string(TEST_DATA_DIR) + "/edgeCases/emptyKey.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_EQ(1, result.size());
+    ASSERT_TRUE(result.contains(""));
+}
 
-TEST(SimpleParse, uglyStrings) {
+TEST(EdgeCase, emptyStringValue) {
+    const string filePath = string(TEST_DATA_DIR) + "/edgeCases/emptyStringValue.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_EQ("", get<string>(result.at("empty").value));
+}
+
+// Unformatted JSON
+TEST(Unformatted, uglyStrings) {
     const string filePath = string(TEST_DATA_DIR) + "/unformatted/uglyStrings.json";
     const unordered_map<string, ValueJSON> result = parseJSON(filePath);
     ASSERT_EQ(3, result.size());

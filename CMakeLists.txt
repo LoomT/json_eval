@@ -29,7 +29,7 @@ add_executable(tests
         parse.h
         value.h
         value.cpp
-        tests/parseTest.cpp)
+        tests/parseJSONTest.cpp)
 
 target_compile_definitions(tests PUBLIC TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/parseJSON")
 
