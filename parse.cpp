@@ -8,6 +8,7 @@
 using namespace std;
 
 unordered_map<string, ValueJSON> parseObject(string json);
+ValueJSON parseValue(const string& json);
 
 string openFile(const string& filePath) {
     ifstream in(filePath);
@@ -65,31 +66,28 @@ string skipNumber(const string& str) {
     return str;
 }
 
-string skipObject(const string& str) {
-    stack<char> braceStack;
-    braceStack.push('{');
+string skipObjectOrArray(const string& str, bool isObject) {
+    int stack = 1;
     bool inString = false;  // track if we are inside a string literal
     for (size_t i = 1; i < str.size(); ++i) {
         const char c = str[i];
-
         if (inString) {
             if (c == '"') inString = false;
             else if (c == '\\') i++; // skip the next escaped char
         } else {
             if (c == '"') {
                 inString = true;  // starting or ending a string literal
-            } else if (c == '{') {
-                braceStack.push('{');
-            } else if (c == '}') {
-                braceStack.pop();
-                if (braceStack.empty()) {
+            } else if (c == (isObject ? '{' : '[')) {
+                stack++;
+            } else if (c == (isObject ? '}' : ']')) {
+                stack--;
+                if (stack == 0) {
                     return &str[++i];  // found the matching closing brace
                 }
             }
         }
     }
-
-    throw ParseException("No matching closing brace '}' found.");
+    throw ParseException("No matching closing brace found.");
 }
 
 string skipString(const string& str) {
@@ -107,7 +105,8 @@ string skipValue(const string& str) {
     if(str[0] == 'n' || str[0] == 't') return &str[4];
     if(str[0] == 'f') return &str[5];
     if(str[0] == '-' || isdigit(str[0])) return skipNumber(str);
-    if(str[0] == '{') return skipObject(str);
+    if(str[0] == '{') return skipObjectOrArray(str, true);
+    if(str[0] == '[') return skipObjectOrArray(str, false);
 
     throw ParseException("Cant skip");
 }
@@ -129,6 +128,23 @@ string parseString(const string& json) {
     throw ParseException("Missing key closing \"");
 }
 
+vector<ValueJSON> parseArray(string json) { // NOLINT(*-no-recursion)
+    vector<ValueJSON> result;
+    json = skip(json, 1);
+    while(json[0] != ']') {
+        json = skipWS(json);
+        result.push_back(parseValue(json));
+        json = skipWS(skipValue(json));
+        if(json[0] == ',') {
+            json = skipWS(skip(json, 1));
+            if(json[0] == ']') throw ParseException("Unexpected ',' after last value");
+        } else if(json[0] != ']') {
+            throw ParseException("Error: missing ',' after value");
+        }
+    }
+    return result;
+}
+
 ValueJSON parseValue(const string& json) { // NOLINT(*-no-recursion)
     ValueJSON value;
     switch(json[0]) {
@@ -147,6 +163,11 @@ ValueJSON parseValue(const string& json) { // NOLINT(*-no-recursion)
         case '{': {
             value.type = OBJECT;
             value.value = parseObject(json);
+            break;
+        }
+        case '[': {
+            value.type = ARRAY;
+            value.value = parseArray(json);
             break;
         }
         case 't': {
