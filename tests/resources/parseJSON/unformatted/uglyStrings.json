@@ -1,5 +1,5 @@
 {"cat"
 : "dog"
-, "null?": "null!",
-    " malformed"    : "yep"
+, "null1": "null!",
+    "malformed"    : "yep"
   }

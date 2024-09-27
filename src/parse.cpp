@@ -1,7 +1,6 @@
 #include "parse.h"
 #include <iostream>
 #include <fstream>
-#include <stack>
 
 #include "value.h"
 
@@ -198,12 +197,34 @@ ValueJSON parseValue(const string& json) { // NOLINT(*-no-recursion)
     return value;
 }
 
+/**
+ * Checks if the string can be a valid C++ variable name
+ * Only letters, numbers and underscores are allowed. The first character has to be a letter.
+ *
+ * @param key string key
+ * @return true if valid, false otherwise
+ */
+bool isKeyValid(const string& key) {
+    if(key.empty()) return false;
+    // check if the first character is a letter
+    if(const char first = key[0]; first < 65 || first > 90 && first < 97 || first > 122) return false;
+    for(int i = 1; i < key.size(); i++) {
+        const char c = key[i];
+        if(c >= 65 && c <= 90 || c >= 97 && c <= 122) continue;
+        if(isdigit(c)) continue;
+        if(c == '_') continue;
+        return false;
+    }
+    return true;
+}
+
 unordered_map<string, ValueJSON> parseObject(string json) { // NOLINT(*-no-recursion)
     unordered_map<string, ValueJSON> object;
     if(json[0] != '{') throw ParseException("Missing object opening curly brace '{'");
     json = skipWS(skip(json, 1));
     while(json[0] != '}') {
         const string key = parseString(json);
+        if(!isKeyValid(key)) throw ParseException(("Invalid key syntax for key " + key).c_str());
         json = skipWS(skipString(json));
         if(json[0] != ':') throw ParseException("Missing ':' between key and value");
         json = skipWS(skip(json, 1));

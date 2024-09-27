@@ -87,25 +87,23 @@ TEST(ParseComplexValid, everything) {
 }
 
 // Escaped char
-TEST(ParseEscapedChar, escapedQuoteInKey) {
-    const string filePath = string(TEST_DATA_DIR) + "/escapedChar/escapedQuoteInKey.json";
-    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
-    ASSERT_TRUE(result.contains("escaped\""));
-}
-
 TEST(ParseEscapedChar, escapedLastQuoteInKey) {
     const string filePath = string(TEST_DATA_DIR) + "/escapedChar/escapedLastQuoteInKey.json";
     ASSERT_THROW(parseJSON(filePath), ParseException);
 }
 
-// Edge cases
+// Key in objects
 TEST(EdgeCase, emptyKey) {
-    const string filePath = string(TEST_DATA_DIR) + "/edgeCases/emptyKey.json";
-    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
-    ASSERT_EQ(1, result.size());
-    ASSERT_TRUE(result.contains(""));
+    const string filePath = string(TEST_DATA_DIR) + "/key/emptyKey.json";
+    ASSERT_THROW(parseJSON(filePath), ParseException);
 }
 
+TEST(ParseEscapedChar, escapedQuoteInKey) {
+    const string filePath = string(TEST_DATA_DIR) + "/key/escapedQuoteInKey.json";
+    ASSERT_THROW(parseJSON(filePath), ParseException);
+}
+
+// Edge cases
 TEST(EdgeCase, emptyStringValue) {
     const string filePath = string(TEST_DATA_DIR) + "/edgeCases/emptyStringValue.json";
     const unordered_map<string, ValueJSON> result = parseJSON(filePath);
