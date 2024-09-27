@@ -92,16 +92,17 @@ string skipObject(const string& str) {
     throw ParseException("No matching closing brace '}' found.");
 }
 
-string skipValue(const string& str) {
-    if(str[0] == '"') {
-        bool escaped = false;
-        for(int i = 1; i < str.size(); i++) {
-            if(str[i] == '"' && !escaped) return &str[i+1];
-
-            if(str[i] == '\\' && !escaped) escaped = true;
-            else escaped = false;
-        }
+string skipString(const string& str) {
+    if(str[0] != '"') throw ParseException("Missing quotation mark before");
+    for(int i = 1; i < str.size(); i++) {
+        if(str[i] == '"') return &str[i+1];
+        if(str[i] == '\\') i++;
     }
+    throw ParseException("Cant skip");
+}
+
+string skipValue(const string& str) {
+    if(str[0] == '"') return skipString(str);
     //null, true or false
     if(str[0] == 'n' || str[0] == 't') return &str[4];
     if(str[0] == 'f') return &str[5];
@@ -112,14 +113,16 @@ string skipValue(const string& str) {
 }
 
 string parseString(const string& json) {
-    if(json[0] != '"') throw ParseException("Missing key opening \"");
+    if(json[0] != '"') throw ParseException("Missing key opening quotation mark '\"'");
     string result;
-    bool escaped = false;
     for(int i = 1; i < json.size(); i++) {
-        if(json[i] == '"' && !escaped) return result;
+        if(json[i] == '"') return result;
 
-        if(json[i] == '\\' && !escaped) escaped = true;
-        else escaped = false;
+        if(json[i] == '\\') {
+            i++;
+            result += json[i];
+            continue;
+        }
 
         result += json[i];
     }
@@ -180,7 +183,7 @@ unordered_map<string, ValueJSON> parseObject(string json) { // NOLINT(*-no-recur
     json = skipWS(skip(json, 1));
     while(json[0] != '}') {
         const string key = parseString(json);
-        json = skipWS(skip(json, key.size() + 2));
+        json = skipWS(skipString(json));
         if(json[0] != ':') throw ParseException("Missing ':' between key and value");
         json = skipWS(skip(json, 1));
         if(ValueJSON value = parseValue(json); !object.insert({key, value}).second)
