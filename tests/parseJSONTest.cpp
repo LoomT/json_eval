@@ -81,6 +81,11 @@ TEST(ParseComplexValid, bigNoArrays) {
     ASSERT_NO_THROW(parseJSON(filePath));
 }
 
+TEST(ParseComplexValid, everything) {
+    const string filePath = string(TEST_DATA_DIR) + "/complex/everything.json";
+    ASSERT_NO_THROW(parseJSON(filePath));
+}
+
 // Escaped char
 TEST(ParseEscapedChar, escapedQuoteInKey) {
     const string filePath = string(TEST_DATA_DIR) + "/escapedChar/escapedQuoteInKey.json";
