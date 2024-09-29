@@ -22,24 +22,23 @@ struct node {
 
 class ExpressionParseException final : public std::exception {
     std::string message;
-    std::string expression;
-    const std::string::size_type pos;
 
 public:
-    explicit ExpressionParseException(const char* msg, const char* expression, const std::string::size_type pos)
-        : message(msg), expression(expression), pos(pos) {}
+    explicit ExpressionParseException(const char* msg, const char* expression, const std::string::size_type pos) {
+        message = std::string(msg) + '\n' + expression + '\n';
+        for(int i = 0; i < pos; i++) {
+            message += ' ';
+        }
+        message += '^';
+    }
 
     [[nodiscard]] const char* what() const noexcept override
     {
-        std::string str = message + '\n' + expression + '\n';
-        for(int i = 0; i < pos; i++) {
-            str += ' ';
-        }
-        str += "^\n";
-        return str.data();
+
+        return message.c_str();
     }
 };
 
-node parseExpression(const std::string& expression);
+node parseExpression(const std::string& expression, std::string::size_type pos = 0);
 
 #endif //EXPRESSION_H
