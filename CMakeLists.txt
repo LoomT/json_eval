@@ -20,7 +20,9 @@ add_executable(json_eval src/main.cpp
         src/parse.cpp
         src/parse.h
         src/value.h
-        src/value.cpp)
+        src/value.cpp
+        src/expression.h
+        src/expression.cpp)
 
 target_link_libraries(json_eval gtest gtest_main)
 
