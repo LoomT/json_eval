@@ -27,6 +27,7 @@ node parseExpression(const string& expression) {
                 result = leaf;
             }
         }
+        else throw ExpressionParseException("Unexpected character", expression.c_str(), pos);
     }
     return result;
 }
