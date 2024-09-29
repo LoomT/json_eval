@@ -199,7 +199,7 @@ ValueJSON parseValue(const string& json) { // NOLINT(*-no-recursion)
 
 /**
  * Checks if the string can be a valid C++ variable name
- * Only letters, numbers and underscores are allowed. The first character has to be a letter.
+ * Only letters, numbers and underscores are allowed. The first character cannot be a digit.
  *
  * @param key string key
  * @return true if valid, false otherwise
@@ -207,7 +207,7 @@ ValueJSON parseValue(const string& json) { // NOLINT(*-no-recursion)
 bool isKeyValid(const string& key) {
     if(key.empty()) return false;
     // check if the first character is a letter
-    if(const char first = key[0]; first < 65 || first > 90 && first < 97 || first > 122) return false;
+    if(isdigit(key[0])) return false;
     for(int i = 1; i < key.size(); i++) {
         const char c = key[i];
         if(c >= 65 && c <= 90 || c >= 97 && c <= 122) continue;
