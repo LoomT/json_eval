@@ -34,11 +34,10 @@ public:
 
     [[nodiscard]] const char* what() const noexcept override
     {
-
         return message.c_str();
     }
 };
 
-node parseExpression(const std::string& expression, std::string::size_type pos = 0);
+node parseExpression(const std::string& expression);
 
 #endif //EXPRESSION_H

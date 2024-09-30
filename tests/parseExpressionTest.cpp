@@ -49,3 +49,41 @@ TEST(JSONPath, path4) {
 TEST(JSONPath, numberInPath) {
     EXPECT_THROW(parseExpression("a.1"), ExpressionParseException);
 }
+
+TEST(NumberLiteral, simpleNumber) {
+    const node actual = parseExpression("1");
+    EXPECT_EQ(1, actual.literal);
+    EXPECT_EQ(NUMBER_LITERAL, actual.action);
+}
+
+TEST(Subscript, simple) {
+    const node actual = parseExpression("a[1]");
+    EXPECT_STREQ("a", actual.variable.c_str());
+    EXPECT_EQ(SUBSCRIPT, actual.action);
+    EXPECT_EQ(1, actual.children.at(0).literal);
+    EXPECT_EQ(NUMBER_LITERAL, actual.children.at(0).action);
+}
+
+TEST(Subscript, simpleExpressionInSubscript) {
+    const node actual = parseExpression("a[b]");
+    EXPECT_STREQ("a", actual.variable.c_str());
+    EXPECT_EQ(SUBSCRIPT, actual.action);
+    EXPECT_STREQ("b", actual.children.at(0).variable.c_str());
+    EXPECT_EQ(VARIABLE, actual.children.at(0).action);
+}
+
+TEST(Subscript, memberOfArrayValue) {
+    const node actual = parseExpression("a[b].c");
+    EXPECT_STREQ("a", actual.variable.c_str());
+    EXPECT_EQ(SUBSCRIPT, actual.action);
+    EXPECT_EQ("b", actual.children.at(0).variable.c_str());
+    EXPECT_EQ(VARIABLE, actual.children.at(0).action);
+}
+
+TEST(Subscript, simpleMix) {
+    const node actual = parseExpression("a.b[c.d[2].e]");
+    EXPECT_STREQ("a", actual.variable.c_str());
+    EXPECT_EQ(SUBSCRIPT, actual.action);
+    EXPECT_EQ("b", actual.children.at(0).variable.c_str());
+    EXPECT_EQ(VARIABLE, actual.children.at(0).action);
+}

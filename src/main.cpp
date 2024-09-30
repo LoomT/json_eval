@@ -9,7 +9,7 @@ using namespace std; // only std allowed anyway
 int main() {
     // const unordered_map<string, ValueJSON> map = parseJSON("bigNoArrays.json");
     // cout << objectToString(map);
-    const string input = "a";
+    const string input = "a.b[12].c";
     const node result = parseExpression(input);
     stack<pair<int, node>> stack;
     stack.emplace(0, result);
