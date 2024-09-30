@@ -1,5 +1,6 @@
 #ifndef EXPRESSION_H
 #define EXPRESSION_H
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -7,7 +8,8 @@ enum nodeAction {
     VARIABLE,
     NUMBER_LITERAL,
     GET_MEMBER,
-    SUBSCRIPT,
+    GET_SUBSCRIPT,
+    ONLY_SUBSCRIPT,
     MAX,
     MIN,
     SIZE
@@ -15,8 +17,9 @@ enum nodeAction {
 
 struct node {
     int literal = 0;
-    std::string variable;
     nodeAction action;
+    std::string variable;
+    std::shared_ptr<node> subscript;
     std::vector<node> children; // list for functions with multiple args, otherwise get first
 };
 
@@ -38,6 +41,6 @@ public:
     }
 };
 
-node parseExpression(const std::string& expression);
+std::unique_ptr<node> parseExpression(const std::string& expression);
 
 #endif //EXPRESSION_H
