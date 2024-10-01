@@ -1,15 +1,14 @@
-#ifndef JSON_EVAL_PARSE_H
-#define JSON_EVAL_PARSE_H
+#ifndef JSON_H
+#define JSON_H
 #include <string>
 #include <unordered_map>
 #include "value.h"
 
-class ParseException final : public std::exception {
-private:
+class JSONParseException final : public std::exception {
     std::string message;
 
 public:
-    explicit ParseException(const char* msg)
+    explicit JSONParseException(const char* msg)
         : message(msg) {}
 
     [[nodiscard]] const char* what() const noexcept override
@@ -20,4 +19,4 @@ public:
 
 std::unordered_map<std::string, ValueJSON> parseJSON(const std::string& filePath);
 
-#endif //JSON_EVAL_PARSE_H
+#endif //JSON_H

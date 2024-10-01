@@ -1,4 +1,4 @@
-#include "parse.h"
+#include "JSON.h"
 #include <iostream>
 #include <fstream>
 
@@ -48,7 +48,7 @@ string skipNumber(const string& str) {
         if(i == 0 && str[i] == '-') continue;
         if(isdigit(str[i])) continue;
         if(str[i] == '.') {
-            if(dot) throw ParseException("Multiple dots in a number");
+            if(dot) throw JSONParseException("Multiple dots in a number");
             dot = true;
             continue;
         }
@@ -58,14 +58,14 @@ string skipNumber(const string& str) {
             if(isdigit(str[i])) {
                 continue;
             }
-            throw ParseException("Unexpected character after exponent");
+            throw JSONParseException("Unexpected character after exponent");
         }
         return &str[i];
     }
     return str;
 }
 
-string skipObjectOrArray(const string& str, bool isObject) {
+string skipObjectOrArray(const string& str, const bool isObject) {
     int stack = 1;
     bool inString = false;  // track if we are inside a string literal
     for (size_t i = 1; i < str.size(); ++i) {
@@ -86,16 +86,16 @@ string skipObjectOrArray(const string& str, bool isObject) {
             }
         }
     }
-    throw ParseException("No matching closing brace found.");
+    throw JSONParseException("No matching closing brace found.");
 }
 
 string skipString(const string& str) {
-    if(str[0] != '"') throw ParseException("Missing quotation mark before");
+    if(str[0] != '"') throw JSONParseException("Missing quotation mark before");
     for(int i = 1; i < str.size(); i++) {
         if(str[i] == '"') return &str[i+1];
         if(str[i] == '\\') i++;
     }
-    throw ParseException("Cant skip");
+    throw JSONParseException("Cant skip");
 }
 
 string skipValue(const string& str) {
@@ -107,11 +107,11 @@ string skipValue(const string& str) {
     if(str[0] == '{') return skipObjectOrArray(str, true);
     if(str[0] == '[') return skipObjectOrArray(str, false);
 
-    throw ParseException("Cant skip");
+    throw JSONParseException("Cant skip");
 }
 
 string parseString(const string& json) {
-    if(json[0] != '"') throw ParseException("Missing key opening quotation mark '\"'");
+    if(json[0] != '"') throw JSONParseException("Missing key opening quotation mark '\"'");
     string result;
     for(int i = 1; i < json.size(); i++) {
         if(json[i] == '"') return result;
@@ -124,7 +124,7 @@ string parseString(const string& json) {
 
         result += json[i];
     }
-    throw ParseException("Missing key closing \"");
+    throw JSONParseException("Missing key closing \"");
 }
 
 vector<ValueJSON> parseArray(string json) { // NOLINT(*-no-recursion)
@@ -136,9 +136,9 @@ vector<ValueJSON> parseArray(string json) { // NOLINT(*-no-recursion)
         json = skipWS(skipValue(json));
         if(json[0] == ',') {
             json = skipWS(skip(json, 1));
-            if(json[0] == ']') throw ParseException("Unexpected ',' after last value");
+            if(json[0] == ']') throw JSONParseException("Unexpected ',' after last value");
         } else if(json[0] != ']') {
-            throw ParseException("Error: missing ',' after value");
+            throw JSONParseException("Error: missing ',' after value");
         }
     }
     return result;
@@ -152,7 +152,7 @@ ValueJSON parseValue(const string& json) { // NOLINT(*-no-recursion)
                 value.type = typeNULL;
                 break;
             }
-            throw ParseException("Unexpected value type");
+            throw JSONParseException("Unexpected value type");
         }
         case '"': {
             value.type = STRING;
@@ -175,7 +175,7 @@ ValueJSON parseValue(const string& json) { // NOLINT(*-no-recursion)
                 value.value = true;
                 break;
             }
-            throw ParseException("Unexpected value type");
+            throw JSONParseException("Unexpected value type");
         }
         case 'f': {
             if(json.size() >= 5 && json[1] == 'a' && json[2] == 'l' && json[3] == 's' && json[4] == 'e') {
@@ -183,7 +183,7 @@ ValueJSON parseValue(const string& json) { // NOLINT(*-no-recursion)
                 value.value = false;
                 break;
             }
-            throw ParseException("Unexpected value type");
+            throw JSONParseException("Unexpected value type");
         }
         case '-':case '0':case '1':case '2':case '3':case '4':
         case '5':case '6':case '7':case '8':case '9': {
@@ -192,7 +192,7 @@ ValueJSON parseValue(const string& json) { // NOLINT(*-no-recursion)
             break;
         }
 
-        default: throw ParseException("Unexpected value type");
+        default: throw JSONParseException("Unexpected value type");
     }
     return value;
 }
@@ -220,23 +220,23 @@ bool isKeyValid(const string& key) {
 
 unordered_map<string, ValueJSON> parseObject(string json) { // NOLINT(*-no-recursion)
     unordered_map<string, ValueJSON> object;
-    if(json[0] != '{') throw ParseException("Missing object opening curly brace '{'");
+    if(json[0] != '{') throw JSONParseException("Missing object opening curly brace '{'");
     json = skipWS(skip(json, 1));
     while(json[0] != '}') {
         const string key = parseString(json);
-        if(!isKeyValid(key)) throw ParseException(("Invalid key syntax for key " + key).c_str());
+        if(!isKeyValid(key)) throw JSONParseException(("Invalid key syntax for key " + key).c_str());
         json = skipWS(skipString(json));
-        if(json[0] != ':') throw ParseException("Missing ':' between key and value");
+        if(json[0] != ':') throw JSONParseException("Missing ':' between key and value");
         json = skipWS(skip(json, 1));
         if(ValueJSON value = parseValue(json); !object.insert({key, value}).second)
-            throw ParseException("Duplicate keys");
+            throw JSONParseException("Duplicate keys");
         json = skipWS(skipValue(json));
         if(json[0] == ',') {
             json = skipWS(skip(json, 1));
-            if(json[0] == '}') throw ParseException("Unexpected ',' after last value");
+            if(json[0] == '}') throw JSONParseException("Unexpected ',' after last value");
         } else if(json[0] != '}') {
             const string message = "Key: " + key + " Error: missing ',' after value";
-            throw ParseException(message.c_str());
+            throw JSONParseException(message.c_str());
         }
     }
     return object;
@@ -245,6 +245,6 @@ unordered_map<string, ValueJSON> parseObject(string json) { // NOLINT(*-no-recur
 unordered_map<std::string, ValueJSON> parseJSON(const string& filePath) {
     cout << "Parsing this string:\n" << openFile(filePath) << endl << "End of string" << endl;
     const string json = skipWS(openFile(filePath));
-    if(json.size() < 2) throw ParseException("JSON file is less than 2 characters");
+    if(json.size() < 2) throw JSONParseException("JSON file is less than 2 characters");
     return parseObject(json);
 }

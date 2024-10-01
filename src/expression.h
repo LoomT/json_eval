@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-enum nodeAction {
+enum NodeAction {
     VARIABLE,
     NUMBER_LITERAL,
     GET_MEMBER,
@@ -15,12 +15,12 @@ enum nodeAction {
     SIZE
 };
 
-struct node {
+struct Node {
     int literal = 0;
-    nodeAction action;
+    NodeAction action;
     std::string variable;
-    std::shared_ptr<node> subscript;
-    std::vector<node> children; // list for functions with multiple args, otherwise get first
+    std::shared_ptr<Node> subscript;
+    std::vector<Node> children; // list for functions with multiple args, otherwise get first
 };
 
 class ExpressionParseException final : public std::exception {
@@ -41,6 +41,6 @@ public:
     }
 };
 
-std::unique_ptr<node> parseExpression(const std::string& expression);
+std::unique_ptr<Node> parseExpression(const std::string& expression);
 
 #endif //EXPRESSION_H

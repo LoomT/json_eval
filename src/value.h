@@ -2,11 +2,10 @@
 #define VALUE_H
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <variant>
 #include <vector>
 
-enum typeJSON {
+enum TypeJSON {
     STRING,
     NUMBER, //TODO split into int and float?
     OBJECT,
@@ -16,7 +15,7 @@ enum typeJSON {
 };
 
 struct ValueJSON {
-    typeJSON type;
+    TypeJSON type;
     std::variant<std::string, double, bool, std::unordered_map<std::string, ValueJSON>, std::vector<ValueJSON>> value;
 };
 

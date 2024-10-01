@@ -17,8 +17,8 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 add_executable(json_eval src/main.cpp
-        src/parse.cpp
-        src/parse.h
+        src/JSON.cpp
+        src/JSON.h
         src/value.h
         src/value.cpp
         src/expression.h
@@ -27,8 +27,8 @@ add_executable(json_eval src/main.cpp
 target_link_libraries(json_eval gtest gtest_main)
 
 add_executable(tests
-        src/parse.cpp
-        src/parse.h
+        src/JSON.cpp
+        src/JSON.h
         src/value.h
         src/value.cpp
         tests/parseJSONTest.cpp

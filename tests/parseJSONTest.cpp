@@ -1,7 +1,7 @@
-#include <gtest/gtest.h>
-
-#include "../src/parse.h"
+#include "../src/JSON.h"
 #include "../src/value.h"
+
+#include <gtest/gtest.h>
 
 using namespace std;
 
@@ -89,18 +89,18 @@ TEST(ParseComplexValid, everything) {
 // Escaped char
 TEST(ParseEscapedChar, escapedLastQuoteInKey) {
     const string filePath = string(TEST_DATA_DIR) + "/escapedChar/escapedLastQuoteInKey.json";
-    ASSERT_THROW(parseJSON(filePath), ParseException);
+    ASSERT_THROW(parseJSON(filePath), JSONParseException);
 }
 
 // Key in objects
 TEST(EdgeCase, emptyKey) {
     const string filePath = string(TEST_DATA_DIR) + "/key/emptyKey.json";
-    ASSERT_THROW(parseJSON(filePath), ParseException);
+    ASSERT_THROW(parseJSON(filePath), JSONParseException);
 }
 
 TEST(ParseEscapedChar, escapedQuoteInKey) {
     const string filePath = string(TEST_DATA_DIR) + "/key/escapedQuoteInKey.json";
-    ASSERT_THROW(parseJSON(filePath), ParseException);
+    ASSERT_THROW(parseJSON(filePath), JSONParseException);
 }
 
 // Edge cases

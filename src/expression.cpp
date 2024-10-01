@@ -5,7 +5,7 @@
 
 using namespace std;
 
-unique_ptr<node> parseExpression(const string& expression, string::size_type& pos);
+unique_ptr<Node> parseExpression(const string& expression, string::size_type& pos);
 
 bool isLetter(const char c) {
     if((c >= 65 && c <= 90) || (c >= 97 && c <= 122)) return true;
@@ -21,38 +21,38 @@ string parseIdentifier(const string& expression, string::size_type& pos) {
     if(pos == expression.size()) throw ExpressionParseException("Expected identifier here", expression.c_str(), pos);
     if(!isLetter(expression[pos]) && expression[pos] != '_')
         throw ExpressionParseException("Unexpected character", expression.c_str(), pos);
-    node result;
+    Node result;
     const string::size_type wordStart = pos;
     while(pos < expression.size()
           && (isLetter(expression[pos]) || isdigit(expression[pos]) || expression[pos] == '_')) pos++;
     return expression.substr(wordStart, pos - wordStart);
 }
 
-node parseNextOnPath(const string& expression, string::size_type& pos) {
+Node parseNextOnPath(const string& expression, string::size_type& pos) {
     if(pos == expression.size() || iswspace(expression[pos]) || isArithmeticOperator(expression[pos]) || expression[pos] == ']') {
-        node leaf;
+        Node leaf;
         leaf.action = VARIABLE;
         return leaf;
     }
     if(expression[pos] == '.') { // access member from this identifier
-        node parent;
+        Node parent;
         parent.action = GET_MEMBER;
         const string identifier = parseIdentifier(expression, ++pos);
-        node child = parseNextOnPath(expression, pos);
+        Node child = parseNextOnPath(expression, pos);
         child.variable = identifier;
         parent.children.push_back(child);
         return parent;
     }
     if(expression[pos] == '[') {
-        node parent;
+        Node parent;
         parent.action = GET_SUBSCRIPT;
-        node middle;
+        Node middle;
         middle.subscript = parseExpression(expression, ++pos);
         pos++;
         if(expression[pos] != '.' && expression[pos] != '[') {
             middle.action = ONLY_SUBSCRIPT;
         } else {
-            node leaf = parseNextOnPath(expression, pos);
+            Node leaf = parseNextOnPath(expression, pos);
 
             middle.children = leaf.children;
             middle.action = leaf.action;
@@ -63,34 +63,34 @@ node parseNextOnPath(const string& expression, string::size_type& pos) {
     throw ExpressionParseException("Unexpected character", expression.c_str(), pos);
 }
 
-unique_ptr<node> parseExpression(const string& expression, string::size_type& pos) {
+unique_ptr<Node> parseExpression(const string& expression, string::size_type& pos) {
     // a.b
-    unique_ptr<node> result;
+    unique_ptr<Node> result;
 
     while(pos < expression.size()) {
         const char& c = expression[pos];
         if(iswspace(c)) continue;
         if(isLetter(c) || c == '_') {
             const string identifier = parseIdentifier(expression, pos);
-            node path = parseNextOnPath(expression, pos);
+            Node path = parseNextOnPath(expression, pos);
             path.variable = identifier;
-            return make_unique<node>(path);
+            return make_unique<Node>(path);
         }
         else if(isdigit(c)) {
             auto* len = new size_t;
             const int numberLiteral = stoi(expression.substr(pos), len);
             pos += *len;
-            node number;
+            Node number;
             number.literal = numberLiteral;
             number.action = NUMBER_LITERAL;
-            return make_unique<node>(number);
+            return make_unique<Node>(number);
         }
         else throw ExpressionParseException("Unexpected character", expression.c_str(), pos);
     }
     return result;
 }
 
-unique_ptr<node> parseExpression(const std::string& expression) {
+unique_ptr<Node> parseExpression(const std::string& expression) {
     string::size_type pos = 0;
     return parseExpression(expression, pos);
 }
