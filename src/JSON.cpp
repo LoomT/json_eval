@@ -9,6 +9,11 @@ using namespace std;
 unordered_map<string, ValueJSON> parseObject(string json);
 ValueJSON parseValue(const string& json);
 
+/**
+ *
+ * @param filePath file path of JSON
+ * @return contents of the JSON file in string
+ */
 string openFile(const string& filePath) {
     ifstream in(filePath);
     if(!in.good()) {
@@ -29,7 +34,7 @@ string openFile(const string& filePath) {
  * @param str string to strip
  * @return string with whitespace skipped
  */
-string skipWS(const string& str) {
+inline string skipWS(const string& str) {
     if(str.empty()) return str;
     string::size_type pos = 0;
     while(isspace(str[pos])) {
@@ -38,10 +43,21 @@ string skipWS(const string& str) {
     return &str[pos];
 }
 
-string skip(const string& str, const string::size_type amount) {
+/**
+ *
+ * @param str string
+ * @param amount characters to skip
+ * @return str with the amount of characters skipped
+ */
+inline string skip(const string& str, const string::size_type amount) {
     return &str[amount];
 }
 
+/**
+ *
+ * @param str JSON string starting with number value
+ * @return JSON string with the number value skipped
+ */
 string skipNumber(const string& str) {
     bool dot = false;
     for(int i = 0; i < str.size(); i++) {
@@ -65,6 +81,12 @@ string skipNumber(const string& str) {
     return str;
 }
 
+/**
+ *
+ * @param str JSON string starting with object or array value
+ * @param isObject true to skip an object, false for array
+ * @return JSON string with the object or array value skipped
+ */
 string skipObjectOrArray(const string& str, const bool isObject) {
     int stack = 1;
     bool inString = false;  // track if we are inside a string literal
@@ -89,6 +111,11 @@ string skipObjectOrArray(const string& str, const bool isObject) {
     throw JSONParseException("No matching closing brace found.");
 }
 
+/**
+ *
+* @param str JSON string starting with string value
+ * @return JSON string with the string value skipped
+ */
 string skipString(const string& str) {
     if(str[0] != '"') throw JSONParseException("Missing quotation mark before");
     for(int i = 1; i < str.size(); i++) {
@@ -98,6 +125,11 @@ string skipString(const string& str) {
     throw JSONParseException("Cant skip");
 }
 
+/**
+ *
+ * @param str JSON string starting with value
+ * @return JSON string with the value skipped
+ */
 string skipValue(const string& str) {
     if(str[0] == '"') return skipString(str);
     //null, true or false
@@ -107,16 +139,23 @@ string skipValue(const string& str) {
     if(str[0] == '{') return skipObjectOrArray(str, true);
     if(str[0] == '[') return skipObjectOrArray(str, false);
 
-    throw JSONParseException("Cant skip");
+    throw JSONParseException("Error while skipping value");
 }
 
+/**
+ * Extracts a string
+ * 
+ * @param json string that contains a string to be parsed in front,
+ * the wanted string should be surrounded with "
+ * @return the extracted string
+ */
 string parseString(const string& json) {
     if(json[0] != '"') throw JSONParseException("Missing key opening quotation mark '\"'");
     string result;
     for(int i = 1; i < json.size(); i++) {
         if(json[i] == '"') return result;
 
-        if(json[i] == '\\') {
+        if(json[i] == '\\') { //TODO revise escape sequence parsing
             i++;
             result += json[i];
             continue;
@@ -124,9 +163,14 @@ string parseString(const string& json) {
 
         result += json[i];
     }
-    throw JSONParseException("Missing key closing \"");
+    throw JSONParseException("Missing string closing quotation mark '\"'");
 }
 
+/**
+ *
+ * @param json JSON string with array in front
+ * @return vector representation of the JSON array value
+ */
 vector<ValueJSON> parseArray(string json) { // NOLINT(*-no-recursion)
     vector<ValueJSON> result;
     json = skip(json, 1);
@@ -144,6 +188,12 @@ vector<ValueJSON> parseArray(string json) { // NOLINT(*-no-recursion)
     return result;
 }
 
+/**
+ * Parses string JSON value into ValueJSON type
+ *
+ * @param json string with value to parse in front
+ * @return parsed value
+ */
 ValueJSON parseValue(const string& json) { // NOLINT(*-no-recursion)
     ValueJSON value;
     switch(json[0]) {
@@ -204,7 +254,7 @@ ValueJSON parseValue(const string& json) { // NOLINT(*-no-recursion)
  * @param key string key
  * @return true if valid, false otherwise
  */
-bool isKeyValid(const string& key) {
+inline bool isKeyValid(const string& key) {
     if(key.empty()) return false;
     // check if the first character is a letter
     if(isdigit(key[0])) return false;
@@ -218,6 +268,12 @@ bool isKeyValid(const string& key) {
     return true;
 }
 
+/**
+ * Parses JSON object into a hashmap
+ *
+ * @param json JSON object string
+ * @return hashmap representation of the JSON object
+ */
 unordered_map<string, ValueJSON> parseObject(string json) { // NOLINT(*-no-recursion)
     unordered_map<string, ValueJSON> object;
     if(json[0] != '{') throw JSONParseException("Missing object opening curly brace '{'");
@@ -242,8 +298,13 @@ unordered_map<string, ValueJSON> parseObject(string json) { // NOLINT(*-no-recur
     return object;
 }
 
+/**
+ *
+ * @param filePath file path of the JSON to parse
+ * @return hashmap representation of the JSON file
+ */
 unordered_map<std::string, ValueJSON> parseJSON(const string& filePath) {
-    cout << "Parsing this string:\n" << openFile(filePath) << endl << "End of string" << endl;
+    cout << "Parsing this string:\n" << openFile(filePath) << endl << endl;
     const string json = skipWS(openFile(filePath));
     if(json.size() < 2) throw JSONParseException("JSON file is less than 2 characters");
     return parseObject(json);

@@ -17,6 +17,11 @@ public:
     }
 };
 
+/**
+ *
+ * @param filePath file path of the JSON to parse
+ * @return hashmap representation of the JSON file
+ */
 std::unordered_map<std::string, ValueJSON> parseJSON(const std::string& filePath);
 
 #endif //JSON_H
