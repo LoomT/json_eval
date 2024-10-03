@@ -118,7 +118,7 @@ string skipObjectOrArray(const string& str, const bool isObject) {
  * @return JSON string with the string value skipped
  */
 string skipString(const string& str) {
-    if(str[0] != '"') throw JSONParseException("Missing quotation mark before");
+    if(str[0] != '"') throw JSONParseException("Missing string opening quotation mark");
     for(int i = 1; i < str.size(); i++) {
         if(str[i] == '"') return &str[i+1];
         if(str[i] == '\\') i++;
@@ -132,15 +132,17 @@ string skipString(const string& str) {
  * @return JSON string with the value skipped
  */
 string skipValue(const string& str) {
-    if(str[0] == '"') return skipString(str);
-    //null, true or false
-    if(str[0] == 'n' || str[0] == 't') return &str[4];
-    if(str[0] == 'f') return &str[5];
-    if(str[0] == '-' || isdigit(str[0])) return skipNumber(str);
-    if(str[0] == '{') return skipObjectOrArray(str, true);
-    if(str[0] == '[') return skipObjectOrArray(str, false);
-
-    throw JSONParseException("Error while skipping value");
+    switch (str[0]) {
+        case '"': return skipString(str);
+        case 'n':
+        case 't': return &str[4];
+        case 'f': return &str[5];
+        case '-':case '0':case '1':case '2':case '3':case '4':
+        case '5':case '6':case '7':case '8':case '9': return skipNumber(str);
+        case '{': return skipObjectOrArray(str, true);
+        case '[': return skipObjectOrArray(str, false);
+        default: throw JSONParseException("Error while skipping value");
+    }
 }
 
 /**
