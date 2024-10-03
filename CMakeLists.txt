@@ -22,9 +22,9 @@ add_executable(json_eval src/main.cpp
         src/value.h
         src/value.cpp
         src/expression.h
-        src/expression.cpp)
-
-target_link_libraries(json_eval gtest gtest_main)
+        src/expression.cpp
+        src/execute.cpp
+        src/execute.h)
 
 add_executable(tests
         src/JSON.cpp

@@ -1,18 +1,26 @@
 #include <iostream>
 #include <stack>
 
+#include "execute.h"
 #include "JSON.h"
 #include "expression.h"
 
 using namespace std; // only std allowed anyway
 
-int main() {
-    // const unordered_map<string, ValueJSON> map = parseJSON("bigNoArrays.json");
-    // cout << objectToString(map);
-    const string input = "a.b[12][c.d]";
-    unique_ptr<Node> result = parseExpression(input);
+void printParsedExpression(unique_ptr<Node> node);
+
+int main(int argc, char* argv[]) {
+    const unordered_map<string, ValueJSON> map = parseJSON("yep.json");
+    const string input = "a[f][0]";
+    const unique_ptr<Node> result = parseExpression(input);
+    cout << toString(executeExpression(map, *result)) << endl;
+
+    return 0;
+}
+
+void printParsedExpression(unique_ptr<Node> node) {
     stack<pair<int, unique_ptr<Node>>> stack;
-    stack.emplace(0, move(result));
+    stack.emplace(0, move(node));
     while(!stack.empty()) {
         auto [ident, n] = std::move(stack.top());
         stack.pop();
@@ -27,5 +35,4 @@ int main() {
             stack.emplace(ident+1, make_unique<Node>(c));
         }
     }
-    return 0;
 }
