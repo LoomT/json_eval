@@ -42,3 +42,5 @@ target_link_libraries(tests GTest::gtest_main)
 
 include(GoogleTest)
 gtest_discover_tests(tests)
+
+add_link_options(-static -static-libgcc -static-libstdc++)
