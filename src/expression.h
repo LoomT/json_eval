@@ -19,7 +19,7 @@ struct Node {
     int literal = 0;
     NodeAction action;
     std::string variable;
-    std::shared_ptr<Node> subscript;
+    std::shared_ptr<Node> subscript; // this could ideally be a unique pointer
     std::vector<Node> children; // list for functions with multiple args, otherwise get first
 };
 

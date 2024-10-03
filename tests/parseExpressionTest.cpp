@@ -38,10 +38,10 @@ TEST(JSONPath, path4) {
     const Node child1 = actual->children.at(0);
     EXPECT_STREQ("b", child1.variable.c_str());
     EXPECT_EQ(GET_MEMBER, child1.action);
-    const Node child2 = child1.children.at(0);
+    const Node& child2 = child1.children.at(0);
     EXPECT_STREQ("_c", child2.variable.c_str());
     EXPECT_EQ(GET_MEMBER, child2.action);
-    const Node child3 = child2.children.at(0);
+    const Node& child3 = child2.children.at(0);
     EXPECT_STREQ("d1", child3.variable.c_str());
     EXPECT_EQ(VARIABLE, child3.action);
 }
@@ -84,7 +84,7 @@ TEST(Subscript, memberOfArrayValue) {
     EXPECT_STREQ("b", child1.subscript->variable.c_str());
     EXPECT_EQ(VARIABLE, child1.subscript->action);
     EXPECT_EQ(GET_MEMBER, child1.action);
-    const Node child2 = child1.children.at(0);
+    const Node& child2 = child1.children.at(0);
     EXPECT_STREQ("c", child2.variable.c_str());
     EXPECT_EQ(VARIABLE, child2.action);
 }
@@ -95,23 +95,23 @@ TEST(Subscript, complexPathMix) {
     const Node b = actual->children.at(0);
     EXPECT_STREQ("b", b.variable.c_str());
     EXPECT_EQ(GET_SUBSCRIPT, b.action);
-    const Node firstSubscript = b.children.at(0);
+    const Node& firstSubscript = b.children.at(0);
     EXPECT_STREQ("c", firstSubscript.subscript->variable.c_str());
     EXPECT_EQ(GET_MEMBER, firstSubscript.subscript->action);
     const Node d2 = firstSubscript.subscript->children.at(0);
     EXPECT_STREQ("d2", d2.variable.c_str());
     EXPECT_EQ(GET_SUBSCRIPT, d2.action);
-    const Node innerSubscript = d2.children.at(0);
+    const Node& innerSubscript = d2.children.at(0);
     EXPECT_EQ(221, innerSubscript.subscript->literal);
     EXPECT_EQ(NUMBER_LITERAL, innerSubscript.subscript->action);
     EXPECT_EQ(GET_MEMBER, innerSubscript.action);
-    const Node ee = innerSubscript.children.at(0);
+    const Node& ee = innerSubscript.children.at(0);
     EXPECT_STREQ("ee", ee.variable.c_str());
     EXPECT_EQ(VARIABLE, ee.action);
-    const Node secondSubscript = firstSubscript.children.at(0);
+    const Node& secondSubscript = firstSubscript.children.at(0);
     EXPECT_EQ(1, secondSubscript.subscript->literal);
     EXPECT_EQ(NUMBER_LITERAL, secondSubscript.subscript->action);
-    const Node f = secondSubscript.children.at(0);
+    const Node& f = secondSubscript.children.at(0);
     EXPECT_STREQ("f", f.variable.c_str());
     EXPECT_EQ(VARIABLE, f.action);
 }
