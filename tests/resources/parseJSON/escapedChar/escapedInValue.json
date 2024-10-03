@@ -1,0 +1,11 @@
+{
+  "escape": "esc\\ape",
+  "forward": "\/",
+  "newline": "top\nbottom",
+  "tab": "\ttabbed",
+  "backspace": "b\b",
+  "form_feed": "\f",
+  "carriage": "\r",
+  "smiley": "\u0002",
+  "quote": "\"citation\""
+}

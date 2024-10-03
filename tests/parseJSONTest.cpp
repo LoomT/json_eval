@@ -18,7 +18,7 @@ TEST(ParseSimple, string) {
     ASSERT_EQ(1, result.size());
     ASSERT_TRUE(result.contains("string"));
     ASSERT_EQ(STRING, result.at("string").type);
-    ASSERT_EQ("something", get<string>(result.at("string").value));
+    ASSERT_STREQ("something", get<string>(result.at("string").value).c_str());
 }
 
 TEST(ParseSimple, number) {
@@ -92,6 +92,60 @@ TEST(ParseEscapedChar, escapedLastQuoteInKey) {
     ASSERT_THROW(parseJSON(filePath), JSONParseException);
 }
 
+TEST(ParseEscapedChar, escapedEscapeInValue) {
+    const string filePath = string(TEST_DATA_DIR) + "/escapedChar/escapedInValue.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_STREQ("esc\\ape", get<string>(result.at("escape").value).c_str());
+}
+
+TEST(ParseEscapedChar, escapedForwardSlashInValue) {
+    const string filePath = string(TEST_DATA_DIR) + "/escapedChar/escapedInValue.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_STREQ("/", get<string>(result.at("forward").value).c_str());
+}
+
+TEST(ParseEscapedChar, escapedNewLineInValue) {
+    const string filePath = string(TEST_DATA_DIR) + "/escapedChar/escapedInValue.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_STREQ("top\nbottom", get<string>(result.at("newline").value).c_str());
+}
+
+TEST(ParseEscapedChar, escapedTabInValue) {
+    const string filePath = string(TEST_DATA_DIR) + "/escapedChar/escapedInValue.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_STREQ("\ttabbed", get<string>(result.at("tab").value).c_str());
+}
+
+TEST(ParseEscapedChar, escapedBackSpaceInValue) {
+    const string filePath = string(TEST_DATA_DIR) + "/escapedChar/escapedInValue.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_STREQ("b\b", get<string>(result.at("backspace").value).c_str());
+}
+
+TEST(ParseEscapedChar, escapedFormFeedInValue) {
+    const string filePath = string(TEST_DATA_DIR) + "/escapedChar/escapedInValue.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_STREQ("\f", get<string>(result.at("form_feed").value).c_str());
+}
+
+TEST(ParseEscapedChar, escapedCarriageReturnInValue) {
+    const string filePath = string(TEST_DATA_DIR) + "/escapedChar/escapedInValue.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_STREQ("\r", get<string>(result.at("carriage").value).c_str());
+}
+
+TEST(ParseEscapedChar, escapedSmileyInValue) {
+    const string filePath = string(TEST_DATA_DIR) + "/escapedChar/escapedInValue.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_STREQ("\u0002", get<string>(result.at("smiley").value).c_str());
+}
+
+TEST(ParseEscapedChar, escapedQuotesInValue) {
+    const string filePath = string(TEST_DATA_DIR) + "/escapedChar/escapedInValue.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_STREQ("\"citation\"", get<string>(result.at("quote").value).c_str());
+}
+
 // Key in objects
 TEST(EdgeCase, emptyKey) {
     const string filePath = string(TEST_DATA_DIR) + "/key/emptyKey.json";
@@ -107,7 +161,7 @@ TEST(ParseEscapedChar, escapedQuoteInKey) {
 TEST(EdgeCase, emptyStringValue) {
     const string filePath = string(TEST_DATA_DIR) + "/edgeCases/emptyStringValue.json";
     const unordered_map<string, ValueJSON> result = parseJSON(filePath);
-    ASSERT_EQ("", get<string>(result.at("empty").value));
+    ASSERT_STREQ("", get<string>(result.at("empty").value).c_str());
 }
 
 // Unformatted JSON
@@ -125,9 +179,9 @@ TEST(ParseArray, simple) {
     ASSERT_TRUE(result.contains("array"));
     const vector<ValueJSON> array = get<vector<ValueJSON>>(result.at("array").value);
     ASSERT_EQ(3, array.size());
-    ASSERT_EQ("one", get<string>(array.at(0).value));
-    ASSERT_EQ("two", get<string>(array.at(1).value));
-    ASSERT_EQ("three", get<string>(array.at(2).value));
+    ASSERT_STREQ("one", get<string>(array.at(0).value).c_str());
+    ASSERT_STREQ("two", get<string>(array.at(1).value).c_str());
+    ASSERT_STREQ("three", get<string>(array.at(2).value).c_str());
 }
 
 TEST(ParseArray, oneItem) {
@@ -136,7 +190,7 @@ TEST(ParseArray, oneItem) {
     ASSERT_TRUE(result.contains("array"));
     const vector<ValueJSON> array = get<vector<ValueJSON>>(result.at("array").value);
     ASSERT_EQ(1, array.size());
-    ASSERT_EQ("one", get<string>(array.at(0).value));
+    ASSERT_STREQ("one", get<string>(array.at(0).value).c_str());
 }
 
 TEST(ParseArray, differentTypeItems) {
