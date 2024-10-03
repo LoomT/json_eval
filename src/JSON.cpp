@@ -1,6 +1,7 @@
 #include "JSON.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include "value.h"
 
@@ -151,17 +152,52 @@ string skipValue(const string& str) {
  */
 string parseString(const string& json) {
     if(json[0] != '"') throw JSONParseException("Missing key opening quotation mark '\"'");
-    string result;
+    stringstream result;
     for(int i = 1; i < json.size(); i++) {
-        if(json[i] == '"') return result;
+        if(json[i] == '"') return result.str();
 
-        if(json[i] == '\\') { //TODO revise escape sequence parsing
+        if(json[i] == '\\') {
             i++;
-            result += json[i];
-            continue;
+            if(i == json.size()) throw JSONParseException("Reached EOF while parsing string");
+            switch(const char c = json[i]) {
+                case '\\':
+                case '/':
+                case '"':
+                    result << c;
+                    break;
+                case 'b':
+                    result << '\b';
+                    break;
+                case 'f':
+                    result << '\f';
+                    break;
+                case 'n':
+                    result << '\n';
+                    break;
+                case 'r':
+                    result << '\r';
+                    break;
+                case 't':
+                    result << '\t';
+                    break;
+                case 'u': {
+                    stringstream ss;
+                    for(int j = 0; j < 4; j++) {
+                        i++;
+                        if(i == json.size()) throw JSONParseException("Reached EOF while parsing string");
+                        const char h = json[i];
+                        ss << hex << h;
+                    }
+                    if(int j; ss >> j)
+                        result << static_cast<char>(j);
+                    else throw JSONParseException("Error while parsing universal character name");
+                    break;
+                }
+                default: throw JSONParseException("Unexpected escape sequence");
+            }
         }
 
-        result += json[i];
+        else result << json[i];
     }
     throw JSONParseException("Missing string closing quotation mark '\"'");
 }
