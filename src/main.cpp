@@ -34,7 +34,7 @@ void printParsedExpression(unique_ptr<Node> node) {
             cout << "    ";
         }
         if(n->action == NUMBER_LITERAL) cout << n->literal;
-        cout << n->variable;
+        cout << n->identifier;
         if(n->subscript != nullptr) cout << '[' << n->subscript->literal << ']';
         cout << endl;
         for(Node& c : n->children) {

@@ -30,22 +30,22 @@ ValueJSON getItemFromArray(const unordered_map<string, ValueJSON>& JSON, const N
 
 ValueJSON executeExpression(const unordered_map<string, ValueJSON>& JSON, const Node& expression, const unordered_map<string, ValueJSON>& currentObj) {
     switch (expression.action) {
-        case VARIABLE: {
-            const string& variable = expression.variable;
+        case IDENTIFIER: {
+            const string& variable = expression.identifier;
             return currentObj.at(variable);
         }
         case NUMBER_LITERAL: { //TODO add ints to ValueJSON
             return {NUMBER, static_cast<double>(expression.literal)};
         }
         case GET_MEMBER: {
-            const string& variable = expression.variable;
+            const string& variable = expression.identifier;
             if(currentObj.at(variable).type != OBJECT) throw runtime_error("Variable is not an object");
             const unordered_map<string, ValueJSON> obj = get<unordered_map<string, ValueJSON>>(currentObj.at(variable).value);
             const auto next = expression.children.at(0);
             return executeExpression(JSON, next, obj);
         }
         case GET_SUBSCRIPT: {
-            const string& variable = expression.variable;
+            const string& variable = expression.identifier;
             if(currentObj.at(variable).type != ARRAY) throw runtime_error("Variable is not an array");
             const vector<ValueJSON> array = get<vector<ValueJSON>>(currentObj.at(variable).value);
             const Node next = expression.children.at(0);

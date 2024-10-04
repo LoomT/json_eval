@@ -5,7 +5,7 @@
 #include <vector>
 
 enum NodeAction {
-    VARIABLE,
+    IDENTIFIER,
     NUMBER_LITERAL,
     GET_MEMBER,
     GET_SUBSCRIPT,
@@ -18,7 +18,7 @@ enum NodeAction {
 struct Node {
     int literal = 0;
     NodeAction action;
-    std::string variable;
+    std::string identifier;
     std::shared_ptr<Node> subscript; // this could ideally be a unique pointer
     std::vector<Node> children; // list for functions with multiple args, otherwise get first
 };
@@ -41,6 +41,13 @@ public:
     }
 };
 
+/**
+ * Parses the string expression into a linked list
+ * that can be more easily executed
+ *
+ * @param expression complete string expression
+ * @return root node of the expression tree/linked list
+ */
 std::unique_ptr<Node> parseExpression(const std::string& expression);
 
 #endif //EXPRESSION_H
