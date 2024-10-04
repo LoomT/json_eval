@@ -78,7 +78,8 @@ string parseIdentifier(const string& expression, string::size_type& pos) {
  * @return rest of the path as node
  */
 Node parseRestOfPath(const string& expression, string::size_type& pos) { // NOLINT(*-no-recursion)
-    if(pos == expression.size() || iswspace(expression[pos]) || isArithmeticOperator(expression[pos]) || expression[pos] == ']') {
+    if(pos == expression.size() || iswspace(expression[pos]) || isArithmeticOperator(expression[pos])
+        || expression[pos] == ']' || expression[pos] == ',' || expression[pos] == ')') {
         Node leaf;
         leaf.action = IDENTIFIER;
         return leaf;
@@ -173,7 +174,7 @@ Node parseExpression(const string& expression, string::size_type& pos) { // NOLI
                 return path;
             }
         }
-        else if(isdigit(c)) {
+        else if(isdigit(c) || c == '-') {
             auto* len = new size_t;
             const int numberLiteral = stoi(expression.substr(pos), len);
             pos += *len;
