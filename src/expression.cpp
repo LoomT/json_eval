@@ -2,8 +2,12 @@
 
 #include <complex>
 #include <memory>
+#include <unordered_map>
 
 using namespace std;
+
+static unordered_map<string, NodeAction> funcMap =
+    {{"max", MAX}, {"min", MIN}, {"size", SIZE}};
 
 /**
  * Parses the string expression into a linked list
@@ -13,7 +17,7 @@ using namespace std;
  * @param pos current position in the string
  * @return root node of the expression tree/linked list
  */
-unique_ptr<Node> parseExpression(const string& expression, string::size_type& pos);
+Node parseExpression(const string& expression, string::size_type& pos);
 
 /**
  *
@@ -33,6 +37,17 @@ inline bool isLetter(const char c) {
 inline bool isArithmeticOperator(const char c) {
     if(c == '+' || c == '-' || c == '*' || c == '/') return true;
     return false;
+}
+
+/**
+ *
+ * @param expression complete string expression
+ * @param pos current position in expression
+ * @return position with whitespace skipped
+ */
+inline string::size_type skipWS(const string& expression, string::size_type pos) {
+    while(iswspace(expression[pos])) pos++;
+    return pos;
 }
 
 /**
@@ -58,7 +73,7 @@ string parseIdentifier(const string& expression, string::size_type& pos) {
 /**
  *
  * @param expression complete string expression
- * @param pos current position in expression at start of path
+ * @param pos current position in expression at start of path. Moves the pos
  * @return rest of the path as node
  */
 Node parseRestOfPath(const string& expression, string::size_type& pos) { // NOLINT(*-no-recursion)
@@ -80,7 +95,7 @@ Node parseRestOfPath(const string& expression, string::size_type& pos) { // NOLI
         Node parent;
         parent.action = GET_SUBSCRIPT;
         Node middle;
-        middle.subscript = parseExpression(expression, ++pos);
+        middle.subscript = make_shared<Node>(parseExpression(expression, ++pos));
         pos++;
         if(expression[pos] != '.' && expression[pos] != '[') {
             middle.action = ONLY_SUBSCRIPT;
@@ -97,24 +112,64 @@ Node parseRestOfPath(const string& expression, string::size_type& pos) { // NOLI
 }
 
 /**
+ *
+ * @param expression complete string expression
+ * @param pos current position in expression, move the pos
+ * @return input parameters of the function
+ */
+vector<Node> parseFunction(const string& expression, string::size_type& pos) { // NOLINT(*-no-recursion)
+    vector<Node> result;
+    pos = skipWS(expression, pos);
+    while(pos < expression.size()) {
+        result.emplace_back(parseExpression(expression, pos));
+        pos = skipWS(expression, pos);
+        if(pos == expression.size())
+            throw ExpressionParseException("Missing closing bracket",
+                    expression.c_str(), pos);
+        if(expression[pos] == ',') {
+            pos = skipWS(expression, pos);
+            if(pos == expression.size())
+                throw ExpressionParseException("Missing closing bracket",
+                        expression.c_str(), pos);
+            if(expression[pos] == ')')
+                throw ExpressionParseException("Unexpected closing bracket after a comma",
+                    expression.c_str(), pos);
+        } else {
+            if(expression[pos] != ')')
+                throw ExpressionParseException("Missing closing bracket",
+                    expression.c_str(), pos);
+            return result;
+        }
+    }
+    return result;
+}
+
+/**
  * Parses the string expression into a linked list
  * that can be more easily executed
  *
  * @param expression complete string expression
- * @param pos current position in the string
+ * @param pos current position in the string. Moves the pos
  * @return root node of the expression tree/linked list
  */
-unique_ptr<Node> parseExpression(const string& expression, string::size_type& pos) {
-    unique_ptr<Node> result;
+Node parseExpression(const string& expression, string::size_type& pos) { // NOLINT(*-no-recursion)
 
-    while(pos < expression.size()) {
+    while(pos < expression.size() && expression[pos] != ')' && expression[pos] != ',') {
         const char& c = expression[pos];
         if(iswspace(c)) continue;
         if(isLetter(c) || c == '_' || c == '$') {
             const string identifier = parseIdentifier(expression, pos);
-            Node path = parseRestOfPath(expression, pos);
-            path.identifier = identifier;
-            return make_unique<Node>(path);
+            // check if the identifier is actually a function
+            if(funcMap.contains(identifier) && pos < expression.size() && expression[pos] == '(') {
+                Node func;
+                func.action = funcMap.at(identifier);
+                func.children = parseFunction(expression, ++pos);
+                return func;
+            } else {
+                Node path = parseRestOfPath(expression, pos);
+                path.identifier = identifier;
+                return path;
+            }
         }
         else if(isdigit(c)) {
             auto* len = new size_t;
@@ -123,11 +178,11 @@ unique_ptr<Node> parseExpression(const string& expression, string::size_type& po
             Node number;
             number.literal = numberLiteral;
             number.action = NUMBER_LITERAL;
-            return make_unique<Node>(number);
+            return number;
         }
         else throw ExpressionParseException("Unexpected character", expression.c_str(), pos);
     }
-    return result;
+    throw ExpressionParseException("Unexpected stuff", expression.c_str(), pos);
 }
 
 /**
@@ -139,5 +194,5 @@ unique_ptr<Node> parseExpression(const string& expression, string::size_type& po
  */
 unique_ptr<Node> parseExpression(const std::string& expression) {
     string::size_type pos = 0;
-    return parseExpression(expression, pos);
+    return make_unique<Node>(parseExpression(expression, pos));
 }
