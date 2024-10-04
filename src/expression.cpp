@@ -2,6 +2,7 @@
 
 #include <complex>
 #include <memory>
+#include <stack>
 #include <unordered_map>
 
 using namespace std;
@@ -127,7 +128,7 @@ vector<Node> parseFunction(const string& expression, string::size_type& pos) { /
             throw ExpressionParseException("Missing closing bracket",
                     expression.c_str(), pos);
         if(expression[pos] == ',') {
-            pos = skipWS(expression, pos);
+            pos = skipWS(expression, ++pos);
             if(pos == expression.size())
                 throw ExpressionParseException("Missing closing bracket",
                         expression.c_str(), pos);
@@ -138,6 +139,7 @@ vector<Node> parseFunction(const string& expression, string::size_type& pos) { /
             if(expression[pos] != ')')
                 throw ExpressionParseException("Missing closing bracket",
                     expression.c_str(), pos);
+            pos++;
             return result;
         }
     }
@@ -195,4 +197,29 @@ Node parseExpression(const string& expression, string::size_type& pos) { // NOLI
 unique_ptr<Node> parseExpression(const std::string& expression) {
     string::size_type pos = 0;
     return make_unique<Node>(parseExpression(expression, pos));
+}
+
+/**
+ *
+ * @param node node to print
+ */
+string toString(Node node) {
+    stringstream ss;
+    stack<pair<int, Node>> stack;
+    stack.emplace(0, move(node));
+    while(!stack.empty()) {
+        auto [ident, n] = std::move(stack.top());
+        stack.pop();
+        for(int i = 0; i < ident; i++) {
+            ss << "    ";
+        }
+        if(n.action == NUMBER_LITERAL) ss << n.literal;
+        ss << n.identifier;
+        if(n.subscript != nullptr) ss << '[' << n.subscript->literal << ']';
+        ss << endl;
+        for(Node& c : n.children) {
+            stack.emplace(ident+1, Node(c));
+        }
+    }
+    return ss.str();
 }
