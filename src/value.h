@@ -28,7 +28,7 @@ struct ValueJSON {
     ValueJSON() = default;
 };
 
-std::string toString(const ValueJSON& value, int level = 0);
+std::string toString(const ValueJSON& value);
 // std::string objectToString(const std::unordered_map<std::string, ValueJSON>& obj, int level = 0);
 
 #endif //VALUE_H
