@@ -18,7 +18,7 @@ string objectToString(const unordered_map<string, ValueJSON>& obj) { // NOLINT(*
     return ss.str();
 }
 
-string arrayToString(const vector<ValueJSON>& array) {
+string arrayToString(const vector<ValueJSON>& array) { // NOLINT(*-no-recursion)
     stringstream ss;
     stringstream::pos_type pos;
     ss << "[ ";
@@ -36,7 +36,8 @@ string toString(const ValueJSON& value) { // NOLINT(*-no-recursion)
     switch(value.type) {
         case typeNULL: return "null";
         case STRING: return "\"" + get<string>(value.value) + "\"";
-        case NUMBER: return to_string(get<double>(value.value));
+        case INT: return to_string(get<long long>(value.value));
+        case FLOAT: return to_string(get<double>(value.value));
         case OBJECT: return objectToString(get<unordered_map<string, ValueJSON>>(value.value));
         case ARRAY: return arrayToString(get<vector<ValueJSON>>(value.value));
         case BOOL: {

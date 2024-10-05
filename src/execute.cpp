@@ -20,7 +20,7 @@ ValueJSON executeExpression(const unordered_map<string, ValueJSON> &JSON, const 
  * @param expression expression to execute
  * @return evaluated expression on JSON
  */
-inline ValueJSON executeExpression(const unordered_map<string, ValueJSON>& JSON, const Node& expression) {
+inline ValueJSON executeExpression(const unordered_map<string, ValueJSON>& JSON, const Node& expression) { // NOLINT(*-no-recursion)
     return executeExpression(JSON, expression, JSON);
 }
 
@@ -35,9 +35,9 @@ ValueJSON getItemFromArray(const unordered_map<string, ValueJSON> &JSON, const N
                            const vector<ValueJSON> &array) {
 
     const ValueJSON sub = executeExpression(JSON, *expression.subscript);
-    if(sub.type != NUMBER) throw executeException("Subscript should be a number", expression);
-    const int index = static_cast<int>(get<double>(sub.value));
-    if(index > array.size()) throw range_error("Index out of range");
+    if(sub.type != INT) throw executeException("Subscript should be an integer number", expression);
+    const long long index = get<long long>(sub.value);
+    if(index < 0 || index > array.size()) throw range_error("Index out of range");
     ValueJSON arrayItem = array.at(index);
     if(expression.action == ONLY_SUBSCRIPT) return arrayItem;
     const auto next = expression.children.at(0);
@@ -55,6 +55,7 @@ ValueJSON getItemFromArray(const unordered_map<string, ValueJSON> &JSON, const N
 
 
 /**
+ * Returns maximum value, integer if all arguments are also integers, floating point number otherwise
  *
  * @param JSON entire JSON object
  * @param expression max function node
@@ -65,26 +66,43 @@ ValueJSON getMax(const unordered_map<string, ValueJSON> &JSON, const Node &expre
     for(const Node& child : expression.children) {
         arguments.push_back(executeExpression(JSON, child));
     }
+    vector<ValueJSON> values;
+    string exceptionMessage = "Arguments should only be numbers in max function";
     if(arguments.size() == 1 && arguments.at(0).type == ARRAY) {
-        const vector<ValueJSON> arrayValues = get<vector<ValueJSON>>(arguments.at(0).value);
-        if(arrayValues.empty()) throw executeException("Array should not be empty in max function", expression);
-        double result = -DBL_MAX;
-        for(const ValueJSON& child : arrayValues) {
-            if(child.type != NUMBER) throw executeException("Array should only contain numbers in max function", expression);
-            result = max(result, get<double>(child.value));
+        values = get<vector<ValueJSON>>(arguments.at(0).value);
+        if(values.empty()) throw executeException("Array should not be empty in max function", expression);
+        exceptionMessage = "Array should only contain numbers in max function";
+
+    } else {
+        values = arguments;
+        exceptionMessage = "Arguments should only be numbers in max function";
+    }
+
+    bool onlyIntegers = true;
+    for(const ValueJSON& child : values) {
+        if(child.type != INT && child.type != FLOAT) throw executeException(exceptionMessage.c_str(), expression);
+        if(child.type != INT) onlyIntegers = false;
+    }
+    if(onlyIntegers) {
+        long long result = INT_MIN;
+        for(const ValueJSON& child : values) {
+            result = max(result, get<long long>(child.value));
         }
-        return {NUMBER, result};
+        return {INT, result};
     } else {
         double result = -DBL_MAX;
-        for(const ValueJSON& child : arguments) {
-            if(child.type != NUMBER) throw executeException("Arguments should only be numbers in max function", expression);
-            result = max(result, get<double>(child.value));
+        for(const ValueJSON& child : values) {
+            if(child.type == INT)
+                result = max(result, static_cast<double>(get<long long>(child.value)));
+            else
+                result = max(result, get<double>(child.value));
         }
-        return {NUMBER, result};
+        return {FLOAT, result};
     }
 }
 
 /**
+ * Returns minimum value, integer if all arguments are also integers, floating point number otherwise
  *
  * @param JSON entire JSON object
  * @param expression min function node
@@ -95,22 +113,38 @@ ValueJSON getMin(const unordered_map<string, ValueJSON> &JSON, const Node &expre
     for(const Node& child : expression.children) {
         arguments.push_back(executeExpression(JSON, child));
     }
+    vector<ValueJSON> values;
+    string exceptionMessage = "Arguments should only be numbers in min function";
     if(arguments.size() == 1 && arguments.at(0).type == ARRAY) {
-        const vector<ValueJSON> arrayValues = get<vector<ValueJSON>>(arguments.at(0).value);
-        if(arrayValues.empty()) throw executeException("Array should not be empty in min function", expression);
-        double result = DBL_MAX;
-        for(const ValueJSON& child : arrayValues) {
-            if(child.type != NUMBER) throw executeException("Array should only contain numbers in min function", expression);
-            result = min(result, get<double>(child.value));
+        values = get<vector<ValueJSON>>(arguments.at(0).value);
+        if(values.empty()) throw executeException("Array should not be empty in min function", expression);
+        exceptionMessage = "Array should only contain numbers in min function";
+
+    } else {
+        values = arguments;
+        exceptionMessage = "Arguments should only be numbers in min function";
+    }
+
+    bool onlyIntegers = true;
+    for(const ValueJSON& child : values) {
+        if(child.type != INT && child.type != FLOAT) throw executeException(exceptionMessage.c_str(), expression);
+        if(child.type != INT) onlyIntegers = false;
+    }
+    if(onlyIntegers) {
+        long long result = INT_MAX;
+        for(const ValueJSON& child : values) {
+            result = min(result, get<long long>(child.value));
         }
-        return {NUMBER, result};
+        return {INT, result};
     } else {
         double result = DBL_MAX;
-        for(const ValueJSON& child : arguments) {
-            if(child.type != NUMBER) throw executeException("Arguments should only be numbers in min function", expression);
-            result = min(result, get<double>(child.value));
+        for(const ValueJSON& child : values) {
+            if(child.type == INT)
+                result = min(result, static_cast<double>(get<long long>(child.value)));
+            else
+                result = min(result, get<double>(child.value));
         }
-        return {NUMBER, result};
+        return {FLOAT, result};
     }
 }
 
@@ -127,9 +161,9 @@ ValueJSON getSize(const unordered_map<string, ValueJSON> &JSON, const Node &expr
     }
     if(arguments.size() != 1) throw executeException("Size function can only have one argument", expression);
     switch(const ValueJSON& argument = arguments.at(0); argument.type) {
-        case STRING: return {NUMBER, static_cast<double>(get<string>(argument.value).size())};
-        case ARRAY: return {NUMBER, static_cast<double>(get<vector<ValueJSON>>(argument.value).size())};
-        case OBJECT: return {NUMBER, static_cast<double>(get<unordered_map<string, ValueJSON>>(argument.value).size())};
+        case STRING: return {INT, static_cast<long long>(get<string>(argument.value).size())};
+        case ARRAY: return {INT, static_cast<long long>(get<vector<ValueJSON>>(argument.value).size())};
+        case OBJECT: return {INT, static_cast<long long>(get<unordered_map<string, ValueJSON>>(argument.value).size())};
         default: throw executeException("Wrong type for size function", expression);
     }
 }
@@ -148,8 +182,8 @@ ValueJSON executeExpression(const unordered_map<string, ValueJSON>& JSON, const 
             const string& variable = expression.identifier;
             return currentObj.at(variable);
         }
-        case NUMBER_LITERAL: { //TODO add ints to ValueJSON
-            return {NUMBER, static_cast<double>(expression.literal)};
+        case NUMBER_LITERAL: {
+            return {INT, (expression.literal)};
         }
         case GET_MEMBER: {
             const string& variable = expression.identifier;

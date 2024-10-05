@@ -7,7 +7,8 @@
 
 enum TypeJSON {
     STRING,
-    NUMBER, //TODO split into int and float?
+    INT,
+    FLOAT,
     OBJECT,
     ARRAY,
     BOOL,
@@ -16,10 +17,10 @@ enum TypeJSON {
 
 struct ValueJSON {
     TypeJSON type;
-    std::variant<std::string, double, bool, std::unordered_map<std::string, ValueJSON>, std::vector<ValueJSON>> value;
+    std::variant<std::string, long long, double, bool, std::unordered_map<std::string, ValueJSON>, std::vector<ValueJSON>> value;
 
-    ValueJSON(TypeJSON type,
-        const std::variant<std::string, double, bool, std::unordered_map<std::string, ValueJSON>, std::vector<ValueJSON>
+    ValueJSON(const TypeJSON type,
+        const std::variant<std::string, long long, double, bool, std::unordered_map<std::string, ValueJSON>, std::vector<ValueJSON>
         > &value)
         : type(type),
           value(value) {
@@ -29,6 +30,5 @@ struct ValueJSON {
 };
 
 std::string toString(const ValueJSON& value);
-// std::string objectToString(const std::unordered_map<std::string, ValueJSON>& obj, int level = 0);
 
 #endif //VALUE_H
