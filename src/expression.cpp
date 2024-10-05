@@ -165,9 +165,9 @@ Node parseExpression(const string& expression, string::size_type& pos) { // NOLI
             }
         }
         else if(isdigit(c) || c == '-') {
-            auto* len = new size_t;
-            const int numberLiteral = stoi(expression.substr(pos), len);
-            pos += *len;
+            size_t len;
+            const int numberLiteral = stoi(expression.substr(pos), &len);
+            pos += len;
             Node number;
             number.literal = numberLiteral;
             number.action = NUMBER_LITERAL;

@@ -274,7 +274,10 @@ ValueJSON parseValue(const string& json) { // NOLINT(*-no-recursion)
             }
             throw JSONParseException("Unexpected value type");
         }
-        case '-':case '0':case '1':case '2':case '3':case '4':
+        case '-':
+            if(json.size() < 2 || !isdigit(json[1])) throw JSONParseException("Negative sign should be followed by a number");
+        // falls through if there is a digit after -
+        case '0':case '1':case '2':case '3':case '4':
         case '5':case '6':case '7':case '8':case '9': {
             size_t intPos;
             size_t floatPos;
