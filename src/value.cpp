@@ -4,14 +4,18 @@
 
 using namespace std;
 
-string objectToString(const unordered_map<string, ValueJSON>& obj) {
-    string result = "{ ";
+string objectToString(const unordered_map<string, ValueJSON>& obj) { // NOLINT(*-no-recursion)
+    stringstream ss;
+    stringstream::pos_type pos;
+    ss << "{ ";
     for (auto &[key, value] : obj) {
-        result += '"' + key + "\": " + toString(value) + ", ";
+        ss << '"' << key << "\": " << toString(value);
+        pos = ss.tellp();
+        ss << ", ";
     }
-    result.erase(result.size() - 2, 1);
-    result += " }";
-    return result;
+    ss.seekp(pos);
+    ss << " }";
+    return ss.str();
 }
 
 string arrayToString(const vector<ValueJSON>& array) {
