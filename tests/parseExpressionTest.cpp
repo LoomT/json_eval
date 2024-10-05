@@ -3,24 +3,22 @@
 #include <gtest/gtest.h>
 #include <complex>
 
-#include "../src/value.h"
-
 TEST(JSONPath, verySimple) {
-    const std::unique_ptr<Node> actual = parseExpression("a");
-    EXPECT_STREQ("a", actual->identifier.c_str());
-    EXPECT_EQ(IDENTIFIER, actual->action);
+    const Node actual = parseExpression("a");
+    EXPECT_STREQ("a", actual.identifier.c_str());
+    EXPECT_EQ(IDENTIFIER, actual.action);
 }
 
 TEST(JSONPath, simple) {
-    const std::unique_ptr<Node> actual = parseExpression("a1_");
-    EXPECT_STREQ("a1_", actual->identifier.c_str());
-    EXPECT_EQ(IDENTIFIER, actual->action);
+    const Node actual = parseExpression("a1_");
+    EXPECT_STREQ("a1_", actual.identifier.c_str());
+    EXPECT_EQ(IDENTIFIER, actual.action);
 }
 
 TEST(JSONPath, underscoreStart) {
-    const std::unique_ptr<Node> actual = parseExpression("_a1_");
-    EXPECT_STREQ("_a1_", actual->identifier.c_str());
-    EXPECT_EQ(IDENTIFIER, actual->action);
+    const Node actual = parseExpression("_a1_");
+    EXPECT_STREQ("_a1_", actual.identifier.c_str());
+    EXPECT_EQ(IDENTIFIER, actual.action);
 }
 
 TEST(JSONPath, unexpectedStart) {
@@ -28,16 +26,16 @@ TEST(JSONPath, unexpectedStart) {
 }
 
 TEST(JSONPath, path2) {
-    const std::unique_ptr<Node> actual = parseExpression("a.b");
-    EXPECT_STREQ("a", actual->identifier.c_str());
-    EXPECT_EQ(GET_MEMBER, actual->action);
-    EXPECT_STREQ("b", actual->children.at(0).identifier.c_str());
-    EXPECT_EQ(IDENTIFIER, actual->children.at(0).action);
+    const Node actual = parseExpression("a.b");
+    EXPECT_STREQ("a", actual.identifier.c_str());
+    EXPECT_EQ(GET_MEMBER, actual.action);
+    EXPECT_STREQ("b", actual.children.at(0).identifier.c_str());
+    EXPECT_EQ(IDENTIFIER, actual.children.at(0).action);
 }
 
 TEST(JSONPath, path4) {
-    const std::unique_ptr<Node> actual = parseExpression("a.b._c.d1");
-    const Node child1 = actual->children.at(0);
+    const Node actual = parseExpression("a.b._c.d1");
+    const Node child1 = actual.children.at(0);
     EXPECT_STREQ("b", child1.identifier.c_str());
     EXPECT_EQ(GET_MEMBER, child1.action);
     const Node& child2 = child1.children.at(0);
@@ -53,36 +51,36 @@ TEST(JSONPath, numberInPath) {
 }
 
 TEST(NumberLiteral, simpleNumber) {
-    const std::unique_ptr<Node> actual = parseExpression("1");
-    EXPECT_EQ(1, actual->literal);
-    EXPECT_EQ(NUMBER_LITERAL, actual->action);
+    const Node actual = parseExpression("1");
+    EXPECT_EQ(1, actual.literal);
+    EXPECT_EQ(NUMBER_LITERAL, actual.action);
 }
 
 TEST(Subscript, simple) {
-    const std::unique_ptr<Node> actual = parseExpression("a[1]");
-    EXPECT_STREQ("a", actual->identifier.c_str());
-    EXPECT_EQ(GET_SUBSCRIPT, actual->action);
-    const Node child = actual->children.at(0);
+    const Node actual = parseExpression("a[1]");
+    EXPECT_STREQ("a", actual.identifier.c_str());
+    EXPECT_EQ(GET_SUBSCRIPT, actual.action);
+    const Node child = actual.children.at(0);
     EXPECT_EQ(ONLY_SUBSCRIPT, child.action);
     EXPECT_EQ(1, child.subscript->literal);
     EXPECT_EQ(NUMBER_LITERAL, child.subscript->action);
 }
 
 TEST(Subscript, simpleExpressionInSubscript) {
-    const std::unique_ptr<Node> actual = parseExpression("a[b]");
-    EXPECT_STREQ("a", actual->identifier.c_str());
-    EXPECT_EQ(GET_SUBSCRIPT, actual->action);
-    const Node child = actual->children.at(0);
+    const Node actual = parseExpression("a[b]");
+    EXPECT_STREQ("a", actual.identifier.c_str());
+    EXPECT_EQ(GET_SUBSCRIPT, actual.action);
+    const Node child = actual.children.at(0);
     EXPECT_EQ(ONLY_SUBSCRIPT, child.action);
     EXPECT_STREQ("b", child.subscript->identifier.c_str());
     EXPECT_EQ(IDENTIFIER, child.subscript->action);
 }
 
 TEST(Subscript, memberOfArrayValue) {
-    const std::unique_ptr<Node> actual = parseExpression("a[b].c");
-    EXPECT_STREQ("a", actual->identifier.c_str());
-    EXPECT_EQ(GET_SUBSCRIPT, actual->action);
-    const Node child1 = actual->children.at(0);
+    const Node actual = parseExpression("a[b].c");
+    EXPECT_STREQ("a", actual.identifier.c_str());
+    EXPECT_EQ(GET_SUBSCRIPT, actual.action);
+    const Node child1 = actual.children.at(0);
     EXPECT_STREQ("b", child1.subscript->identifier.c_str());
     EXPECT_EQ(IDENTIFIER, child1.subscript->action);
     EXPECT_EQ(GET_MEMBER, child1.action);
@@ -93,8 +91,8 @@ TEST(Subscript, memberOfArrayValue) {
 
 // maybe a bit too many assertions
 TEST(Subscript, complexPathMix) {
-    const std::unique_ptr<Node> actual = parseExpression("a.b[c.d2[221].ee][1].f");
-    const Node b = actual->children.at(0);
+    const Node actual = parseExpression("a.b[c.d2[221].ee][1].f");
+    const Node b = actual.children.at(0);
     EXPECT_STREQ("b", b.identifier.c_str());
     EXPECT_EQ(GET_SUBSCRIPT, b.action);
     const Node& firstSubscript = b.children.at(0);
@@ -135,7 +133,7 @@ TEST(MaxFunction, empty) {
 }
 
 TEST(MaxFunction, oneArg) {
-    const Node actual = *parseExpression("max(1)");
+    const Node actual = parseExpression("max(1)");
     EXPECT_EQ(MAX, actual.action);
     EXPECT_EQ(1, actual.children.size());
     EXPECT_EQ(NUMBER_LITERAL, actual.children.at(0).action);
@@ -143,7 +141,7 @@ TEST(MaxFunction, oneArg) {
 }
 
 TEST(MaxFunction, twoArgs) {
-    const Node actual = *parseExpression("max(a, 3)");
+    const Node actual = parseExpression("max(a, 3)");
     EXPECT_EQ(MAX, actual.action);
     EXPECT_EQ(2, actual.children.size());
     EXPECT_EQ(IDENTIFIER, actual.children.at(0).action);
@@ -152,7 +150,7 @@ TEST(MaxFunction, twoArgs) {
 }
 
 TEST(MaxFunction, moreArgs) {
-    const Node actual = *parseExpression("max(d.e[a], -123 ,  haha)");
+    const Node actual = parseExpression("max(d.e[a], -123 ,  haha)");
     EXPECT_EQ(MAX, actual.action);
     EXPECT_EQ(3, actual.children.size());
     EXPECT_EQ(GET_MEMBER, actual.children.at(0).action);
@@ -162,8 +160,20 @@ TEST(MaxFunction, moreArgs) {
     EXPECT_STREQ("haha", actual.children.at(2).identifier.c_str());
 }
 
+TEST(MaxFunction, extraTrailingComma) {
+    EXPECT_THROW(parseExpression("max(ab,)"), ExpressionParseException);
+}
+
+TEST(MaxFunction, extraLeadingComma) {
+    EXPECT_THROW(parseExpression("max(, ab)"), ExpressionParseException);
+}
+
+TEST(MinFunction, empty) {
+    EXPECT_THROW(parseExpression("min( )"), ExpressionParseException);
+}
+
 TEST(MinFunction, oneArg) {
-    const Node actual = *parseExpression("min(1)");
+    const Node actual = parseExpression("min(1)");
     EXPECT_EQ(MIN, actual.action);
     EXPECT_EQ(1, actual.children.size());
     EXPECT_EQ(NUMBER_LITERAL, actual.children.at(0).action);
@@ -171,7 +181,16 @@ TEST(MinFunction, oneArg) {
 }
 
 TEST(MinFunction, twoArgs) {
-    const Node actual = *parseExpression("min(a, 3)");
+    const Node actual = parseExpression("min(a, 3)");
+    EXPECT_EQ(MIN, actual.action);
+    EXPECT_EQ(2, actual.children.size());
+    EXPECT_EQ(IDENTIFIER, actual.children.at(0).action);
+    EXPECT_STREQ("a", actual.children.at(0).identifier.c_str());
+    EXPECT_EQ(3, actual.children.at(1).literal);
+}
+
+TEST(MinFunction, twoArgsExtraWS) {
+    const Node actual = parseExpression("min( a  , 3   )");
     EXPECT_EQ(MIN, actual.action);
     EXPECT_EQ(2, actual.children.size());
     EXPECT_EQ(IDENTIFIER, actual.children.at(0).action);
@@ -180,7 +199,7 @@ TEST(MinFunction, twoArgs) {
 }
 
 TEST(MinFunction, moreArgs) {
-    const Node actual = *parseExpression("min(d.e[a], -123 ,  haha)");
+    const Node actual = parseExpression("min(d.e[a], -123 ,  haha)");
     EXPECT_EQ(MIN, actual.action);
     EXPECT_EQ(3, actual.children.size());
     EXPECT_EQ(GET_MEMBER, actual.children.at(0).action);
@@ -188,4 +207,24 @@ TEST(MinFunction, moreArgs) {
     EXPECT_EQ(-123, actual.children.at(1).literal);
     EXPECT_EQ(IDENTIFIER, actual.children.at(2).action);
     EXPECT_STREQ("haha", actual.children.at(2).identifier.c_str());
+}
+
+TEST(SizeFunction, empty) {
+    EXPECT_THROW(parseExpression("size(  )"), ExpressionParseException);
+}
+
+TEST(SizeFunction, oneArg) {
+    const Node actual = parseExpression("size(ab)");
+    EXPECT_EQ(SIZE, actual.action);
+    EXPECT_EQ(1, actual.children.size());
+    EXPECT_EQ(IDENTIFIER, actual.children.at(0).action);
+    EXPECT_STREQ("ab", actual.children.at(0).identifier.c_str());
+}
+
+TEST(SizeFunction, oneArgExtraWS) {
+    const Node actual = parseExpression("size( ab  )");
+    EXPECT_EQ(SIZE, actual.action);
+    EXPECT_EQ(1, actual.children.size());
+    EXPECT_EQ(IDENTIFIER, actual.children.at(0).action);
+    EXPECT_STREQ("ab", actual.children.at(0).identifier.c_str());
 }

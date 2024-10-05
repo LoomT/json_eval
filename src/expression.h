@@ -30,7 +30,7 @@ struct Node {
  * @param expression complete string expression
  * @return root node of the expression tree/linked list
  */
-std::unique_ptr<Node> parseExpression(const std::string& expression);
+Node parseExpression(const std::string& expression);
 
 /**
  *

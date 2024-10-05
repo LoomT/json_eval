@@ -161,9 +161,9 @@ Node parseExpression(const string& expression, string::size_type& pos) { // NOLI
         const char& c = expression[pos];
         if(iswspace(c)) continue;
         if(isLetter(c) || c == '_' || c == '$') {
-            const string identifier = parseIdentifier(expression, pos);
             // check if the identifier is actually a function
-            if(funcMap.contains(identifier) && pos < expression.size() && expression[pos] == '(') {
+            if(const string identifier = parseIdentifier(expression, pos);
+                funcMap.contains(identifier) && pos < expression.size() && expression[pos] == '(') {
                 Node func;
                 func.action = funcMap.at(identifier);
                 func.children = parseFunction(expression, ++pos);
@@ -195,9 +195,9 @@ Node parseExpression(const string& expression, string::size_type& pos) { // NOLI
  * @param expression complete string expression
  * @return root node of the expression tree/linked list
  */
-unique_ptr<Node> parseExpression(const std::string& expression) {
+Node parseExpression(const std::string& expression) {
     string::size_type pos = 0;
-    return make_unique<Node>(parseExpression(expression, pos));
+    return parseExpression(expression, pos);
 }
 
 /**
