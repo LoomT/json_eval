@@ -34,21 +34,40 @@ inline ValueJSON executeExpression(const unordered_map<string, ValueJSON>& JSON,
 ValueJSON getItemFromArray(const unordered_map<string, ValueJSON> &JSON, const Node &expression, // NOLINT(*-no-recursion)
                            const vector<ValueJSON> &array) {
 
-    const ValueJSON sub = executeExpression(JSON, *expression.subscript);
-    if(sub.type != INT) throw executeException("Subscript should be an integer number", expression);
+    ValueJSON sub;
+    try {
+        sub = executeExpression(JSON, *expression.subscript);
+    } catch (pathException& e) {
+        e.appendPathFront("[");
+        e.appendPathBack("]");
+        throw;
+    }
+
+    if(sub.type != INT) throw pathException("Subscript should be an integer", "");
     const long long index = get<long long>(sub.value);
-    if(index < 0 || index > array.size()) throw range_error("Index out of range");
+    if(index < 0 || index > array.size())
+        throw pathException("Index was out of bounds for array of size " + to_string(array.size()), '[' + to_string(index) + ']');
     ValueJSON arrayItem = array.at(index);
     if(expression.action == ONLY_SUBSCRIPT) return arrayItem;
     const auto next = expression.children.at(0);
     if(expression.action == GET_MEMBER) {
-        if(arrayItem.type != OBJECT) throw executeException("Variable should be an object", expression);
+        if(arrayItem.type != OBJECT) throw pathException("This path should be an object", '[' + to_string(index) + ']');
         const unordered_map<string, ValueJSON> obj = get<unordered_map<string, ValueJSON>>(arrayItem.value);
-        return executeExpression(JSON, next, obj);
+        try {
+            return executeExpression(JSON, next, obj);
+        } catch (pathException& e) {
+            e.appendPathFront('[' + to_string(index) + ']');
+            throw;
+        }
     }
     if(expression.action == GET_SUBSCRIPT) {
-        if(arrayItem.type != ARRAY) throw executeException("Variable should be an array", expression);
-        return getItemFromArray(JSON, next, get<vector<ValueJSON>>(arrayItem.value));
+        if(arrayItem.type != ARRAY) throw pathException("This path should be an array", '[' + to_string(index) + ']');
+        try {
+            return getItemFromArray(JSON, next, get<vector<ValueJSON>>(arrayItem.value));
+        } catch (pathException& e) {
+            e.appendPathFront('[' + to_string(index) + ']');
+            throw;
+        }
     }
     throw runtime_error("Unexpected action");
 }
@@ -70,7 +89,7 @@ ValueJSON getMax(const unordered_map<string, ValueJSON> &JSON, const Node &expre
     string exceptionMessage = "Arguments should only be numbers in max function";
     if(arguments.size() == 1 && arguments.at(0).type == ARRAY) {
         values = get<vector<ValueJSON>>(arguments.at(0).value);
-        if(values.empty()) throw executeException("Array should not be empty in max function", expression);
+        if(values.empty()) throw executeException("Array should not be empty in max function");
         exceptionMessage = "Array should only contain numbers in max function";
 
     } else {
@@ -80,7 +99,7 @@ ValueJSON getMax(const unordered_map<string, ValueJSON> &JSON, const Node &expre
 
     bool onlyIntegers = true;
     for(const ValueJSON& child : values) {
-        if(child.type != INT && child.type != FLOAT) throw executeException(exceptionMessage.c_str(), expression);
+        if(child.type != INT && child.type != FLOAT) throw executeException(exceptionMessage);
         if(child.type != INT) onlyIntegers = false;
     }
     if(onlyIntegers) {
@@ -117,7 +136,7 @@ ValueJSON getMin(const unordered_map<string, ValueJSON> &JSON, const Node &expre
     string exceptionMessage = "Arguments should only be numbers in min function";
     if(arguments.size() == 1 && arguments.at(0).type == ARRAY) {
         values = get<vector<ValueJSON>>(arguments.at(0).value);
-        if(values.empty()) throw executeException("Array should not be empty in min function", expression);
+        if(values.empty()) throw executeException("Array should not be empty in min function");
         exceptionMessage = "Array should only contain numbers in min function";
 
     } else {
@@ -127,7 +146,7 @@ ValueJSON getMin(const unordered_map<string, ValueJSON> &JSON, const Node &expre
 
     bool onlyIntegers = true;
     for(const ValueJSON& child : values) {
-        if(child.type != INT && child.type != FLOAT) throw executeException(exceptionMessage.c_str(), expression);
+        if(child.type != INT && child.type != FLOAT) throw executeException(exceptionMessage);
         if(child.type != INT) onlyIntegers = false;
     }
     if(onlyIntegers) {
@@ -159,12 +178,12 @@ ValueJSON getSize(const unordered_map<string, ValueJSON> &JSON, const Node &expr
     for(const Node& child : expression.children) {
         arguments.push_back(executeExpression(JSON, child));
     }
-    if(arguments.size() != 1) throw executeException("Size function can only have one argument", expression);
+    if(arguments.size() != 1) throw executeException("Size function can only have one argument");
     switch(const ValueJSON& argument = arguments.at(0); argument.type) {
         case STRING: return {INT, static_cast<long long>(get<string>(argument.value).size())};
         case ARRAY: return {INT, static_cast<long long>(get<vector<ValueJSON>>(argument.value).size())};
         case OBJECT: return {INT, static_cast<long long>(get<unordered_map<string, ValueJSON>>(argument.value).size())};
-        default: throw executeException("Wrong type for size function", expression);
+        default: throw executeException("Wrong type for size function");
     }
 }
 
@@ -179,29 +198,42 @@ ValueJSON executeExpression(const unordered_map<string, ValueJSON>& JSON, const 
     const unordered_map<string, ValueJSON>& currentObj) {
     switch (expression.action) {
         case IDENTIFIER: {
-            const string& variable = expression.identifier;
-            return currentObj.at(variable);
+            const string& identifier = expression.identifier;
+            if(!currentObj.contains(identifier)) throw pathException("No such key in JSON", identifier);
+            return currentObj.at(identifier);
         }
         case NUMBER_LITERAL: {
             return {INT, (expression.literal)};
         }
         case GET_MEMBER: {
-            const string& variable = expression.identifier;
-            if(currentObj.at(variable).type != OBJECT) throw executeException("Variable should be an object", expression);
-            const unordered_map<string, ValueJSON> obj = get<unordered_map<string, ValueJSON>>(currentObj.at(variable).value);
+            const string& identifier = expression.identifier;
+            if(!currentObj.contains(identifier)) throw pathException("No such key in JSON", identifier);
+            if(currentObj.at(identifier).type != OBJECT) throw pathException("This path should be an object", identifier);
+            const unordered_map<string, ValueJSON> obj = get<unordered_map<string, ValueJSON>>(currentObj.at(identifier).value);
             const auto next = expression.children.at(0);
-            return executeExpression(JSON, next, obj);
+            try {
+                return executeExpression(JSON, next, obj);
+            } catch (pathException& e) {
+                e.appendPathFront(identifier + '.');
+                throw;
+            }
         }
         case GET_SUBSCRIPT: {
-            const string& variable = expression.identifier;
-            if(currentObj.at(variable).type != ARRAY) throw executeException("Variable should be an array", expression);
-            const vector<ValueJSON> array = get<vector<ValueJSON>>(currentObj.at(variable).value);
+            const string& identifier = expression.identifier;
+            if(!currentObj.contains(identifier)) throw pathException("No such key in JSON", identifier);
+            if(currentObj.at(identifier).type != ARRAY) throw pathException("This path should be an array", identifier);
+            const vector<ValueJSON> array = get<vector<ValueJSON>>(currentObj.at(identifier).value);
             const Node next = expression.children.at(0);
 
-            return getItemFromArray(JSON, next, array);
+            try {
+                return getItemFromArray(JSON, next, array);
+            } catch (pathException& e) {
+                e.appendPathFront(identifier);
+                throw;
+            }
         }
         case ONLY_SUBSCRIPT:
-            throw executeException("Subscript should not be here", expression);
+            throw executeException("Grave error, switch case ONLY_SUBSCRIPT should be impossible!");
         case MAX: {
             return getMax(JSON, expression);
         }
@@ -212,5 +244,5 @@ ValueJSON executeExpression(const unordered_map<string, ValueJSON>& JSON, const 
             return getSize(JSON, expression);
         }
     }
-    throw executeException("Switch case leaked!", expression);
+    throw executeException("Grave error, switch case leaked!");
 }
