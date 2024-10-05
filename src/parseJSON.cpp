@@ -281,7 +281,7 @@ ValueJSON parseValue(const string& json) { // NOLINT(*-no-recursion)
 
             long long intNumber = stoll(json, &intPos);
             double floatNumber = stod(json, &floatPos);
-            // *intPtr == *floatPtr then there was no fraction part which means it's an integer
+            // if intPos == floatPos then there was no fraction part which means it's an integer
             if(intPos == floatPos) {
                 value.type = INT;
                 value.value = intNumber;
@@ -308,12 +308,10 @@ inline bool isKeyValid(const string& key) {
     if(key.empty()) return false;
     // check if the first character is a letter
     if(const char c = key[0];
-        (c < 'a' || c > 'z') && (c < 'A' || c > 'Z')
-        && c != '_' && c != '$') return false;
+        !isalpha(c) && c != '_' && c != '$') return false;
     for(int i = 1; i < key.size(); i++) {
         if(const char c = key[i];
-            (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-            || isdigit(c) || c == '_' || c == '$') continue;
+            isalpha(c) || isdigit(c) || c == '_' || c == '$') continue;
         return false;
     }
     return true;

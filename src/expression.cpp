@@ -23,16 +23,6 @@ Node parseExpression(const string& expression, string::size_type& pos);
 /**
  *
  * @param c character to check
- * @return true iff c is a letter
- */
-inline bool isLetter(const char c) {
-    if((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) return true;
-    return false;
-}
-
-/**
- *
- * @param c character to check
  * @return true iff it's +, -, * or /
  */
 inline bool isArithmeticOperator(const char c) {
@@ -62,11 +52,11 @@ inline string::size_type skipWS(const string& expression, string::size_type pos)
 string parseIdentifier(const string& expression, string::size_type& pos) {
     if(pos == expression.size())
         throw ExpressionParseException("Expected identifier here", expression.c_str(), pos);
-    if(!isLetter(expression[pos]) && expression[pos] != '_' && expression[pos] != '$')
+    if(!isalpha(expression[pos]) && expression[pos] != '_' && expression[pos] != '$')
         throw ExpressionParseException("Unexpected character", expression.c_str(), pos);
     const string::size_type wordStart = pos;
     while(pos < expression.size()
-          && (isLetter(expression[pos]) || isdigit(expression[pos])
+          && (isalpha(expression[pos]) || isdigit(expression[pos])
               || expression[pos] == '_' || expression[pos] == '$')) pos++;
     return expression.substr(wordStart, pos - wordStart);
 }
@@ -160,7 +150,7 @@ Node parseExpression(const string& expression, string::size_type& pos) { // NOLI
     while(pos < expression.size() && expression[pos] != ')' && expression[pos] != ',') {
         const char& c = expression[pos];
         if(iswspace(c)) continue;
-        if(isLetter(c) || c == '_' || c == '$') {
+        if(isalpha(c) || c == '_' || c == '$') {
             // check if the identifier is actually a function
             if(const string identifier = parseIdentifier(expression, pos);
                 funcMap.contains(identifier) && pos < expression.size() && expression[pos] == '(') {
