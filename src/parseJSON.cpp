@@ -1,6 +1,7 @@
-#include "JSON.h"
+#include "parseJSON.h"
 #include <iostream>
 #include <fstream>
+#include <memory>
 #include <sstream>
 
 #include "value.h"
@@ -275,8 +276,19 @@ ValueJSON parseValue(const string& json) { // NOLINT(*-no-recursion)
         }
         case '-':case '0':case '1':case '2':case '3':case '4':
         case '5':case '6':case '7':case '8':case '9': {
-            value.type = NUMBER;
-            value.value = stod(json);
+            size_t intPos;
+            size_t floatPos;
+
+            long long intNumber = stoll(json, &intPos);
+            double floatNumber = stod(json, &floatPos);
+            // *intPtr == *floatPtr then there was no fraction part which means it's an integer
+            if(intPos == floatPos) {
+                value.type = INT;
+                value.value = intNumber;
+            } else {
+                value.type = FLOAT;
+                value.value = floatNumber;
+            }
             break;
         }
 

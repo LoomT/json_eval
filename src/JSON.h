@@ -2,26 +2,33 @@
 #define JSON_H
 #include <string>
 #include <unordered_map>
-#include "value.h"
 
-class JSONParseException final : public std::exception {
-    std::string message;
+#include "parseJSON.h"
+#include "value.h"
+#include "execute.h"
+#include "expression.h"
+
+class JSON {
+    std::unordered_map<std::string, ValueJSON> data;
 
 public:
-    explicit JSONParseException(const char* msg)
-        : message(msg) {}
+    /**
+     * Constructs a JSON object with the contents of the JSON file
+     * 
+     * @param filePath file path of the JSON file
+     */
+    explicit JSON(const std::string& filePath) {
+        data = parseJSON(filePath);
+    }
 
-    [[nodiscard]] const char* what() const noexcept override
-    {
-        return message.c_str();
+    /**
+     * 
+     * @param expression expression to evaluate on the JSON this object was created with
+     * @return evaluated result
+     */
+    ValueJSON evaluate(const std::string& expression) const {
+        return executeExpression(data, parseExpression(expression));
     }
 };
-
-/**
- *
- * @param filePath file path of the JSON to parse
- * @return hashmap representation of the JSON file
- */
-std::unordered_map<std::string, ValueJSON> parseJSON(const std::string& filePath);
 
 #endif //JSON_H

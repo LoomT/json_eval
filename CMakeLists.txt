@@ -17,24 +17,29 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 add_executable(json_eval src/main.cpp
-        src/JSON.cpp
-        src/JSON.h
+        src/parseJSON.cpp
+        src/parseJSON.h
         src/value.h
         src/value.cpp
         src/expression.h
         src/expression.cpp
         src/execute.cpp
-        src/execute.h)
+        src/execute.h
+        src/JSON.h)
 
 add_executable(tests
-        src/JSON.cpp
-        src/JSON.h
+        src/parseJSON.cpp
+        src/parseJSON.h
         src/value.h
         src/value.cpp
         tests/parseJSONTest.cpp
         src/expression.h
         src/expression.cpp
-        tests/parseExpressionTest.cpp)
+        tests/parseExpressionTest.cpp
+        tests/executeTest.cpp
+        src/execute.cpp
+        src/execute.h
+        src/JSON.h)
 
 target_compile_definitions(tests PUBLIC TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/parseJSON")
 

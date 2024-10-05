@@ -1,9 +1,8 @@
 #include <iostream>
-#include <stack>
 
-#include "execute.h"
-#include "JSON.h"
+#include "parseJSON.h"
 #include "expression.h"
+#include "JSON.h"
 
 using namespace std; // only std allowed anyway
 
@@ -15,11 +14,10 @@ int main(const int argc, char* argv[]) {
                 "Example: ./json_eval test.json \"a.b[1]\"" << endl;
         return -1;
     }
-    const unordered_map<string, ValueJSON> map = parseJSON(argv[1]);
+    const JSON json = JSON(argv[1]);
     const string input = argv[2];
 
-    const unique_ptr<Node> result = parseExpression(input);
-    cout << toString(executeExpression(map, *result)) << endl;
+    cout << toString(json.evaluate(input)) << endl;
 
     return 0;
 }
