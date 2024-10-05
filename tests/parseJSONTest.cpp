@@ -1,4 +1,4 @@
-#include "../src/JSON.h"
+#include "../src/parseJSON.h"
 #include "../src/value.h"
 
 #include <gtest/gtest.h>
@@ -21,13 +21,44 @@ TEST(ParseSimple, string) {
     ASSERT_STREQ("something", get<string>(result.at("string").value).c_str());
 }
 
-TEST(ParseSimple, number) {
+TEST(ParseSimple, integer) {
     const string filePath = string(TEST_DATA_DIR) + "/simple/number.json";
     const unordered_map<string, ValueJSON> result = parseJSON(filePath);
-    ASSERT_EQ(1, result.size());
-    ASSERT_TRUE(result.contains("number"));
-    ASSERT_EQ(NUMBER, result.at("number").type);
-    ASSERT_EQ(5, get<double>(result.at("number").value));
+    ASSERT_TRUE(result.contains("integer"));
+    ASSERT_EQ(INT, result.at("integer").type);
+    ASSERT_EQ(5, get<long long>(result.at("integer").value));
+}
+
+TEST(ParseSimple, negativeInt) {
+    const string filePath = string(TEST_DATA_DIR) + "/simple/number.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_TRUE(result.contains("negativeInt"));
+    ASSERT_EQ(INT, result.at("negativeInt").type);
+    ASSERT_EQ(-6, get<long long>(result.at("negativeInt").value));
+}
+
+TEST(ParseSimple, floating) {
+    const string filePath = string(TEST_DATA_DIR) + "/simple/number.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_TRUE(result.contains("floating"));
+    ASSERT_EQ(FLOAT, result.at("floating").type);
+    ASSERT_FLOAT_EQ(0.12, get<double>(result.at("floating").value));
+}
+
+TEST(ParseSimple, negativeFloat) {
+    const string filePath = string(TEST_DATA_DIR) + "/simple/number.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_TRUE(result.contains("negativeFloat"));
+    ASSERT_EQ(FLOAT, result.at("negativeFloat").type);
+    ASSERT_FLOAT_EQ(-12.002, get<double>(result.at("negativeFloat").value));
+}
+
+TEST(ParseSimple, scaled) {
+    const string filePath = string(TEST_DATA_DIR) + "/simple/number.json";
+    const unordered_map<string, ValueJSON> result = parseJSON(filePath);
+    ASSERT_TRUE(result.contains("scaled"));
+    ASSERT_EQ(FLOAT, result.at("scaled").type);
+    ASSERT_FLOAT_EQ(1.0321e-5, get<double>(result.at("scaled").value));
 }
 
 TEST(ParseSimple, null) {
@@ -201,7 +232,7 @@ TEST(ParseArray, differentTypeItems) {
     ASSERT_EQ(7, array.size());
     ASSERT_STREQ("one", get<string>(array.at(0).value).c_str());
     ASSERT_EQ(typeNULL, array.at(1).type);
-    ASSERT_EQ(3, get<double>(array.at(2).value));
+    ASSERT_EQ(3, get<long long>(array.at(2).value));
     ASSERT_TRUE(get<bool>(array.at(3).value));
     ASSERT_FALSE(get<bool>(array.at(4).value));
     const unordered_map<string, ValueJSON> obj = get<unordered_map<string, ValueJSON>>(array.at(5).value);

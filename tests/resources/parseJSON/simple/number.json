@@ -1,3 +1,7 @@
 {
-  "number": 5
+  "integer": 5,
+  "negativeInt": -6,
+  "floating": 0.12,
+  "negativeFloat": -12.002,
+  "scaled": 1.0321e-5
 }
