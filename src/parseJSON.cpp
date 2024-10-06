@@ -356,7 +356,6 @@ unordered_map<string, ValueJSON> parseObject(string json) { // NOLINT(*-no-recur
  * @return hashmap representation of the JSON file
  */
 unordered_map<std::string, ValueJSON> parseJSON(const string& filePath) {
-    cout << "Parsing this string:\n" << openFile(filePath) << endl << endl;
     const string json = skipWS(openFile(filePath));
     if(json.size() < 2) throw JSONParseException("JSON file is less than 2 characters");
     return parseObject(json);

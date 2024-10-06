@@ -69,7 +69,7 @@ ValueJSON getItemFromArray(const unordered_map<string, ValueJSON> &JSON, const N
             throw;
         }
     }
-    throw runtime_error("Unexpected action");
+    throw executeException("Unexpected action");
 }
 
 

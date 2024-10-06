@@ -6,8 +6,6 @@
 
 using namespace std; // only std allowed anyway
 
-void printParsedExpression(unique_ptr<Node> node);
-
 int main(const int argc, char* argv[]) {
     if (argc != 3) {
         cout << "Usage: ./json_eval <json file> <expression>\n"
