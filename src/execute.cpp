@@ -1,6 +1,7 @@
 #include "execute.h"
 
 #include <cfloat>
+#include <cmath>
 
 using namespace std;
 
@@ -72,6 +73,13 @@ ValueJSON getItemFromArray(const unordered_map<string, ValueJSON> &JSON, const N
     throw executeException("Unexpected action");
 }
 
+inline double extractDouble(const ValueJSON& number) {
+    if(number.type == INT)
+        return static_cast<double>(get<long long>(number.value));
+    else if(number.type == FLOAT)
+        return get<double>(number.value);
+    throw executeException("Unexpected type in extractDouble");
+}
 
 /**
  * Returns maximum value, integer if all arguments are also integers, floating point number otherwise
@@ -111,10 +119,7 @@ ValueJSON getMax(const unordered_map<string, ValueJSON> &JSON, const Node &expre
     } else {
         double result = -DBL_MAX;
         for(const ValueJSON& child : values) {
-            if(child.type == INT)
-                result = max(result, static_cast<double>(get<long long>(child.value)));
-            else
-                result = max(result, get<double>(child.value));
+            result = max(result, extractDouble(child));
         }
         return {FLOAT, result};
     }
@@ -158,10 +163,7 @@ ValueJSON getMin(const unordered_map<string, ValueJSON> &JSON, const Node &expre
     } else {
         double result = DBL_MAX;
         for(const ValueJSON& child : values) {
-            if(child.type == INT)
-                result = min(result, static_cast<double>(get<long long>(child.value)));
-            else
-                result = min(result, get<double>(child.value));
+            result = min(result, extractDouble(child));
         }
         return {FLOAT, result};
     }
@@ -185,6 +187,13 @@ ValueJSON getSize(const unordered_map<string, ValueJSON> &JSON, const Node &expr
         case OBJECT: return {INT, static_cast<long long>(get<unordered_map<string, ValueJSON>>(argument.value).size())};
         default: throw executeException("Wrong type for size function");
     }
+}
+
+pair<ValueJSON, ValueJSON> getOperands(const unordered_map<string, ValueJSON>& JSON, const Node& expression) {
+    if(expression.children.size() != 2) throw executeException("Wrong number of operands for a binary operator");
+    ValueJSON a = executeExpression(JSON, expression.children.at(0));
+    ValueJSON b = executeExpression(JSON, expression.children.at(1));
+    return {a, b};
 }
 
 /**
@@ -242,6 +251,36 @@ ValueJSON executeExpression(const unordered_map<string, ValueJSON>& JSON, const 
         }
         case SIZE: {
             return getSize(JSON, expression);
+        }
+        case ADD: {
+            const auto& [a, b] = getOperands(JSON, expression);
+            if(a.type == INT && b.type == INT)
+                return {INT, get<long long>(a.value) + get<long long>(b.value)};
+            return {FLOAT, extractDouble(a) + extractDouble(b)};
+        }
+        case SUBTRACT: {
+            const auto& [a, b] = getOperands(JSON, expression);
+            if(a.type == INT && b.type == INT)
+                return {INT, get<long long>(a.value) - get<long long>(b.value)};
+            return {FLOAT, extractDouble(a) - extractDouble(b)};
+        }
+        case MULTIPLY: {
+            const auto& [a, b] = getOperands(JSON, expression);
+            if(a.type == INT && b.type == INT)
+                return {INT, get<long long>(a.value) * get<long long>(b.value)};
+            return {FLOAT, extractDouble(a) * extractDouble(b)};
+        }
+        case DIVIDE: {
+            const auto& [a, b] = getOperands(JSON, expression);
+            if(a.type == INT && b.type == INT)
+                return {INT, get<long long>(a.value) / get<long long>(b.value)};
+            return {FLOAT, extractDouble(a) / extractDouble(b)};
+        }
+        case RAISE: {
+            const auto& [a, b] = getOperands(JSON, expression);
+            if(a.type == INT && b.type == INT)
+                return {INT, llround(pow(get<long long>(a.value), get<long long>(b.value)))};
+            return {FLOAT, pow(extractDouble(a), extractDouble(b))};
         }
     }
     throw executeException("Grave error, switch case leaked!");

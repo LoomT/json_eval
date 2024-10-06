@@ -2,13 +2,17 @@
 
 #include <complex>
 #include <memory>
+#include <queue>
 #include <stack>
 #include <unordered_map>
 
 using namespace std;
 
-static unordered_map<string, NodeAction> funcMap =
+const static unordered_map<string, NodeAction> funcMap =
     {{"max", MAX}, {"min", MIN}, {"size", SIZE}};
+
+const static unordered_map<char, NodeAction> operatorMap =
+    {{'+', ADD}, {'-', SUBTRACT}, {'*', MULTIPLY}, {'/', DIVIDE}, {'^', RAISE}};
 
 /**
  * Parses the string expression into a linked list
@@ -25,9 +29,34 @@ Node parseExpression(const string& expression, string::size_type& pos);
  * @param c character to check
  * @return true iff it's +, -, * or /
  */
-inline bool isArithmeticOperator(const char c) {
-    if(c == '+' || c == '-' || c == '*' || c == '/') return true;
+inline bool isArithmeticOperator(const char& c) {
+    if(c == '+' || c == '-' || c == '*' || c == '/' || c == '^') return true;
     return false;
+}
+
+inline bool isArithmeticOperator(const NodeAction& c) {
+    if(c == ADD || c == SUBTRACT || c == MULTIPLY || c == DIVIDE || c == RAISE) return true;
+    return false;
+}
+
+inline int operatorPrecedence(const char& c) {
+    if(c == '+' || c == '-') return 1;
+    if(c == '*' || c == '/') return 2;
+    if(c == '^') return 3;
+    throw invalid_argument("operatorPrecedence error");
+}
+
+inline int operatorPrecedence(const NodeAction& c) {
+    if(c == ADD || c == SUBTRACT) return 1;
+    if(c == MULTIPLY || c == DIVIDE) return 2;
+    if(c == RAISE) return 3;
+    throw invalid_argument("operatorPrecedence error");
+}
+
+inline char operatorAssociativity(const NodeAction& c) {
+    if(c == ADD || c == SUBTRACT || c == MULTIPLY || c == DIVIDE) return 'L';
+    if(c == RAISE) return 'R';
+    throw invalid_argument("operatorPrecedence error");
 }
 
 /**
@@ -138,14 +167,14 @@ vector<Node> parseFunction(const string& expression, string::size_type& pos) { /
 }
 
 /**
- * Parses the string expression into a linked list
+ * Parses JSON path, number literal or function into a linked list
  * that can be more easily executed
  *
  * @param expression complete string expression
  * @param pos current position in the string. Moves the pos
- * @return root node of the expression tree/linked list
+ * @return root node of the operand (JSON path, number literal, function) tree/linked list
  */
-Node parseExpression(const string& expression, string::size_type& pos) { // NOLINT(*-no-recursion)
+Node parseOperand(const string& expression, string::size_type& pos) { // NOLINT(*-no-recursion)
 
     while(pos < expression.size() && expression[pos] != ')' && expression[pos] != ',') {
         const char& c = expression[pos];
@@ -164,7 +193,7 @@ Node parseExpression(const string& expression, string::size_type& pos) { // NOLI
                 return path;
             }
         }
-        else if(isdigit(c) || c == '-') {
+        if(isdigit(c) || c == '-') {
             size_t len;
             const int numberLiteral = stoi(expression.substr(pos), &len);
             pos += len;
@@ -173,9 +202,88 @@ Node parseExpression(const string& expression, string::size_type& pos) { // NOLI
             number.action = NUMBER_LITERAL;
             return number;
         }
-        else throw ExpressionParseException("Unexpected character", expression.c_str(), pos);
+        throw ExpressionParseException("Unexpected character", expression.c_str(), pos);
     }
     throw ExpressionParseException("Unexpected stuff", expression.c_str(), pos);
+}
+
+/**
+ * Parses the whole expression into a linked list
+ * that can be more easily executed
+ *
+ * @param expression complete string expression
+ * @param pos current position in the string. Moves the pos
+ * @return root node of the expression tree/linked list
+ */
+Node parseExpression(const string& expression, string::size_type& pos) {
+    // "a.b[0] + a.b[1] * a.b[a.b[0] + a.b[1]][0] / 2^2"
+    deque<Node> parsedExpression;
+
+    int depth = 0;
+    pos = skipWS(expression, pos);
+    while(pos < expression.size() && expression[pos] != ']' && expression[pos] != ','
+        && (expression[pos] != ')' || depth > 0)) {
+        const char& c = expression[pos];
+        if(c == '(') {
+            depth++;
+            parsedExpression.push_back(parseExpression(expression, ++pos));
+        } else if(c == ')') {
+            depth--;
+            pos++;
+        } else if(isArithmeticOperator(c)) {
+            if(c == '-' && !parsedExpression.empty() && isArithmeticOperator(parsedExpression.back().action)) {
+                parsedExpression.push_back(parseOperand(expression, pos));
+            } else {
+                parsedExpression.emplace_back(operatorMap.at(c));
+                pos++;
+            }
+        } else {
+            parsedExpression.push_back(parseOperand(expression, pos));
+        }
+        pos = skipWS(expression, pos);
+    }
+    if(depth != 0) throw ExpressionParseException("Missing closing brackets", expression.c_str(), pos);
+    if(parsedExpression.size() == 1 && !isArithmeticOperator(parsedExpression.front().action))
+        return parsedExpression.front();
+
+    stack<Node> operators;
+    stack<Node> operands;
+
+    for(Node& node : parsedExpression) {
+        if(!isArithmeticOperator(node.action)) operands.push(node);
+        else {
+            while(!operators.empty() && operatorPrecedence(node.action) <= operatorPrecedence(operators.top().action)
+            && operatorAssociativity(node.action) == 'L') {
+                if(operands.size() < 2) throw ExpressionParseException("Too many operators", expression.c_str(), pos);
+                Node operand = operators.top();
+                operators.pop();
+                Node b = operands.top();
+                operands.pop();
+                Node a = operands.top();
+                operands.pop();
+                operand.children.push_back(a);
+                operand.children.push_back(b);
+                operands.push(operand);
+            }
+            operators.push(node);
+        }
+    }
+
+    while(!operators.empty()) {
+        if(operands.size() < 2) throw ExpressionParseException("Too many operators", expression.c_str(), pos);
+        Node operand = operators.top();
+        operators.pop();
+        Node b = operands.top();
+        operands.pop();
+        Node a = operands.top();
+        operands.pop();
+        operand.children.push_back(a);
+        operand.children.push_back(b);
+        operands.push(operand);
+    }
+
+    if(operands.size() == 1) return operands.top();
+    throw ExpressionParseException("Too many operands", expression.c_str(), pos);
 }
 
 /**

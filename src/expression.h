@@ -12,7 +12,12 @@ enum NodeAction {
     ONLY_SUBSCRIPT,
     MAX,
     MIN,
-    SIZE
+    SIZE,
+    ADD,
+    SUBTRACT,
+    MULTIPLY,
+    DIVIDE,
+    RAISE
 };
 
 struct Node {
@@ -21,6 +26,10 @@ struct Node {
     std::string identifier;
     std::shared_ptr<Node> subscript; // this could ideally be a unique pointer
     std::vector<Node> children; // list for functions with multiple args, otherwise get first
+
+    Node() = default;
+
+    explicit Node(const NodeAction& action): action(action) {}
 };
 
 /**
