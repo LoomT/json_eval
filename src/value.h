@@ -17,11 +17,12 @@ enum TypeJSON {
 
 struct ValueJSON {
     TypeJSON type;
-    std::variant<std::string, long long, double, bool, std::unordered_map<std::string, ValueJSON>, std::vector<ValueJSON>> value;
+    std::variant<std::string, long long, double, bool,
+    std::unordered_map<std::string, ValueJSON>, std::vector<ValueJSON>> value;
 
     ValueJSON(const TypeJSON type,
-        const std::variant<std::string, long long, double, bool, std::unordered_map<std::string, ValueJSON>, std::vector<ValueJSON>
-        > &value)
+              const std::variant<std::string, long long, double, bool,
+              std::unordered_map<std::string, ValueJSON>, std::vector<ValueJSON>> &value)
         : type(type),
           value(value) {
     }

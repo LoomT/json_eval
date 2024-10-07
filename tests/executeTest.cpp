@@ -99,3 +99,21 @@ TEST(Arithmetic, mixFloat) {
     const JSON json = JSON(filePath);
     ASSERT_FLOAT_EQ(4.6, get<long long>(json.evaluate("a.b[0] + a.b[ 1 ] * a.b[a.b[0] + a.b[1]][0] / 5.5 - 0.4").value));
 }
+
+TEST(Arithmetic, justParentheses) {
+    const string filePath = string(TEST_DATA_DIR) + "/test.json";
+    const JSON json = JSON(filePath);
+    ASSERT_EQ(5, get<long long>(json.evaluate("(5)").value));
+}
+
+TEST(Arithmetic, parentheses) {
+    const string filePath = string(TEST_DATA_DIR) + "/test.json";
+    const JSON json = JSON(filePath);
+    ASSERT_EQ(9, get<long long>(json.evaluate("(1+2 * (3 + 2*-1))^2").value));
+}
+
+TEST(Arithmetic, mixParentheses) {
+    const string filePath = string(TEST_DATA_DIR) + "/test.json";
+    const JSON json = JSON(filePath);
+    ASSERT_EQ(15, get<long long>(json.evaluate("a.b[0] + a.b[ 1 ] * a.b[a.b[0] + a.b[1]][0] / 2^2 + (1+2 * (3 + 2*-1))^2").value));
+}
