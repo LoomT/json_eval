@@ -228,10 +228,11 @@ Node parseExpression(const string& expression, string::size_type& pos) {
             depth++;
             parsedExpression.push_back(parseExpression(expression, ++pos));
         } else if(c == ')') {
+            if(depth == 0) throw ExpressionParseException("Unexpected closing bracket", expression.c_str(), pos);
             depth--;
             pos++;
         } else if(isArithmeticOperator(c)) {
-            if(c == '-' && !parsedExpression.empty() && isArithmeticOperator(parsedExpression.back().action)) {
+            if(c == '-' && (parsedExpression.empty() || isArithmeticOperator(parsedExpression.back().action))) {
                 parsedExpression.push_back(parseOperand(expression, pos));
             } else {
                 parsedExpression.emplace_back(operatorMap.at(c));
