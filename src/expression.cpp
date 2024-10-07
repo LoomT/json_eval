@@ -194,6 +194,7 @@ Node parseOperand(const string& expression, string::size_type& pos) { // NOLINT(
             }
         }
         if(isdigit(c) || c == '-') {
+            //TODO float literals in expression
             size_t len;
             const int numberLiteral = stoi(expression.substr(pos), &len);
             pos += len;

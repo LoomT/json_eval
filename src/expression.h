@@ -17,7 +17,16 @@ enum NodeAction {
     SUBTRACT,
     MULTIPLY,
     DIVIDE,
-    RAISE
+    RAISE,
+    //TODO implement the following:
+    AND,
+    OR,
+    NOT,
+    EQUAL_TO,
+    MORE_THAN,
+    LESS_THAN,
+    MORE_OR_EQUAL,
+    LESS_OR_EQUAL
 };
 
 struct Node {
