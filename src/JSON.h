@@ -18,7 +18,7 @@ public:
      * @param filePath file path of the JSON file
      */
     explicit JSON(const std::string& filePath) {
-        data = parseJSON(filePath);
+        data = parseFileJSON(filePath);
     }
 
     /**

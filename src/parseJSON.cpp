@@ -31,22 +31,6 @@ string openFile(const string& filePath) {
 
 /**
  *
- * strips leading whitespace by moving the pointer on the given string
- *
- * @param str string to strip
- * @return string with whitespace skipped
- */
-inline string skipWS(const string& str) {
-    if(str.empty()) return str;
-    string::size_type pos = 0;
-    while(isspace(str[pos])) {
-        pos++;
-    }
-    return &str[pos];
-}
-
-/**
- *
  * @param str string
  * @param amount characters to skip
  * @return str with the amount of characters skipped
@@ -214,11 +198,10 @@ vector<ValueJSON> parseArray(string json) { // NOLINT(*-no-recursion)
     vector<ValueJSON> result;
     json = skip(json, 1);
     while(json[0] != ']') {
-        json = skipWS(json);
         result.push_back(parseValue(json));
-        json = skipWS(skipValue(json));
+        json = skipValue(json);
         if(json[0] == ',') {
-            json = skipWS(skip(json, 1));
+            json = skip(json, 1);
             if(json[0] == ']') throw JSONParseException("Unexpected ',' after last value");
         } else if(json[0] != ']') {
             throw JSONParseException("Error: missing ',' after value");
@@ -329,18 +312,18 @@ inline bool isKeyValid(const string& key) {
 unordered_map<string, ValueJSON> parseObject(string json) { // NOLINT(*-no-recursion)
     unordered_map<string, ValueJSON> object;
     if(json[0] != '{') throw JSONParseException("Missing object opening curly brace '{'");
-    json = skipWS(skip(json, 1));
+    json = skip(json, 1);
     while(json[0] != '}') {
         const string key = parseString(json);
         if(!isKeyValid(key)) throw JSONParseException(("Invalid key syntax for key " + key).c_str());
-        json = skipWS(skipString(json));
+        json = skipString(json);
         if(json[0] != ':') throw JSONParseException("Missing ':' between key and value");
-        json = skipWS(skip(json, 1));
+        json = skip(json, 1);
         if(ValueJSON value = parseValue(json); !object.insert({key, value}).second)
             throw JSONParseException("Duplicate keys");
-        json = skipWS(skipValue(json));
+        json = skipValue(json);
         if(json[0] == ',') {
-            json = skipWS(skip(json, 1));
+            json = skip(json, 1);
             if(json[0] == '}') throw JSONParseException("Unexpected ',' after last value");
         } else if(json[0] != '}') {
             const string message = "Key: " + key + " Error: missing ',' after value";
@@ -355,8 +338,15 @@ unordered_map<string, ValueJSON> parseObject(string json) { // NOLINT(*-no-recur
  * @param filePath file path of the JSON to parse
  * @return hashmap representation of the JSON file
  */
-unordered_map<std::string, ValueJSON> parseJSON(const string& filePath) {
-    const string json = skipWS(openFile(filePath));
+unordered_map<std::string, ValueJSON> parseFileJSON(const string& filePath) {
+    string json = openFile(filePath);
+    erase_if(json, [](const unsigned char c){return iswspace(c);});
+    if(json.size() < 2) throw JSONParseException("JSON file is less than 2 characters");
+    return parseObject(json);
+}
+
+unordered_map<std::string, ValueJSON> parseJSON(string json) {
+    erase_if(json, [](const unsigned char c){return iswspace(c);});
     if(json.size() < 2) throw JSONParseException("JSON file is less than 2 characters");
     return parseObject(json);
 }

@@ -207,15 +207,18 @@ ValueJSON executeExpression(const unordered_map<string, ValueJSON>& JSON, const 
     const unordered_map<string, ValueJSON>& currentObj) {
     switch (expression.action) {
         case IDENTIFIER: {
-            const string& identifier = expression.identifier;
+            const auto& identifier = get<string>(expression.value);
             if(!currentObj.contains(identifier)) throw pathException("No such key in JSON", identifier);
             return currentObj.at(identifier);
         }
-        case NUMBER_LITERAL: {
-            return {INT, (expression.literal)};
+        case INT_LITERAL: {
+            return {INT, get<long long>(expression.value)};
+        }
+        case FLOAT_LITERAL: {
+            return {FLOAT, get<double>(expression.value)};
         }
         case GET_MEMBER: {
-            const string& identifier = expression.identifier;
+            const auto& identifier = get<string>(expression.value);
             if(!currentObj.contains(identifier)) throw pathException("No such key in JSON", identifier);
             if(currentObj.at(identifier).type != OBJECT) throw pathException("This path should be an object", identifier);
             const unordered_map<string, ValueJSON> obj = get<unordered_map<string, ValueJSON>>(currentObj.at(identifier).value);
@@ -228,7 +231,7 @@ ValueJSON executeExpression(const unordered_map<string, ValueJSON>& JSON, const 
             }
         }
         case GET_SUBSCRIPT: {
-            const string& identifier = expression.identifier;
+            const auto& identifier = get<string>(expression.value);
             if(!currentObj.contains(identifier)) throw pathException("No such key in JSON", identifier);
             if(currentObj.at(identifier).type != ARRAY) throw pathException("This path should be an array", identifier);
             const vector<ValueJSON> array = get<vector<ValueJSON>>(currentObj.at(identifier).value);

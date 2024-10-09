@@ -2,11 +2,13 @@
 #define EXPRESSION_H
 #include <memory>
 #include <string>
+#include <variant>
 #include <vector>
 
 enum NodeAction {
     IDENTIFIER,
-    NUMBER_LITERAL,
+    INT_LITERAL,
+    FLOAT_LITERAL,
     GET_MEMBER,
     GET_SUBSCRIPT,
     ONLY_SUBSCRIPT,
@@ -30,9 +32,8 @@ enum NodeAction {
 };
 
 struct Node {
-    int literal = 0;
+    std::variant<long long, double, std::string> value; // could be a number literal or identifier
     NodeAction action;
-    std::string identifier;
     std::shared_ptr<Node> subscript; // this could ideally be a unique pointer
     std::vector<Node> children; // list for functions with multiple args, otherwise get first
 
@@ -48,7 +49,7 @@ struct Node {
  * @param expression complete string expression
  * @return root node of the expression tree/linked list
  */
-Node parseExpression(const std::string& expression);
+Node parseExpression(std::string expression);
 
 /**
  *
