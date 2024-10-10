@@ -97,7 +97,7 @@ TEST(Arithmetic, mix) {
 TEST(Arithmetic, mixFloat) {
     const string filePath = string(TEST_DATA_DIR) + "/test.json";
     const JSON json = JSON(filePath);
-    ASSERT_FLOAT_EQ(4.6, get<long long>(json.evaluate("a.b[0] + a.b[ 1 ] * a.b[a.b[0] + a.b[1]][0] / 5.5 - 0.4").value));
+    ASSERT_FLOAT_EQ(4.6, get<double>(json.evaluate("a.b[0] + a.b[ 1 ] * a.b[a.b[0] + a.b[1]][0] / 5.5 - 0.4").value));
 }
 
 TEST(Arithmetic, justParentheses) {
