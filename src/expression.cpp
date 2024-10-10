@@ -88,13 +88,11 @@ string parseIdentifier(const string& expression, string::size_type& pos) {
 unique_ptr<Node> parseRestOfPath(const string& expression, string::size_type& pos) { // NOLINT(*-no-recursion)
     if(pos == expression.size() || isArithmeticOperator(expression[pos])
         || expression[pos] == ']' || expression[pos] == ',' || expression[pos] == ')') {
-        unique_ptr<Node> leaf;
-        leaf->action = IDENTIFIER;
+        auto leaf = make_unique<Node>(IDENTIFIER);
         return leaf;
     }
     if(expression[pos] == '.') { // access member from this identifier
-        unique_ptr<Node> parent = new Node(GET_MEMBER);
-        parent->action = GET_MEMBER;
+        auto parent = make_unique<Node>(GET_MEMBER);
         const string identifier = parseIdentifier(expression, ++pos);
         const unique_ptr<Node> child = parseRestOfPath(expression, pos);
         child->value = identifier;
@@ -102,15 +100,14 @@ unique_ptr<Node> parseRestOfPath(const string& expression, string::size_type& po
         return parent;
     }
     if(expression[pos] == '[') {
-        unique_ptr<Node> parent;
-        parent->action = GET_SUBSCRIPT;
+        auto parent = make_unique<Node>(GET_SUBSCRIPT);
         Node middle;
         middle.subscript = parseExpression(expression, ++pos);
         pos++;
         if(expression[pos] != '.' && expression[pos] != '[') {
             middle.action = ONLY_SUBSCRIPT;
         } else {
-            unique_ptr<Node> leaf = parseRestOfPath(expression, pos);
+            const unique_ptr<Node> leaf = parseRestOfPath(expression, pos);
 
             middle.children = move(leaf->children);
             middle.action = leaf->action;
@@ -169,8 +166,7 @@ unique_ptr<Node> parseOperand(const string& expression, string::size_type& pos) 
             // check if the identifier is actually a function
             if(const string identifier = parseIdentifier(expression, pos);
                 funcMap.contains(identifier) && pos < expression.size() && expression[pos] == '(') {
-                unique_ptr<Node> func;
-                func->action = funcMap.at(identifier);
+                auto func = make_unique<Node>(funcMap.at(identifier));
                 func->children = parseFunction(expression, ++pos);
                 return func;
             } else {
@@ -180,13 +176,12 @@ unique_ptr<Node> parseOperand(const string& expression, string::size_type& pos) 
             }
         }
         if(isdigit(c) || c == '-') {
-            //TODO float literals in expression
             size_t intPos;
             size_t floatPos;
             const string numberToParse = expression.substr(pos);
             const long long intNumber = stoll(numberToParse, &intPos);
             const double floatNumber = stod(numberToParse, &floatPos);
-            unique_ptr<Node> number;
+            auto number = make_unique<Node>();
             if(intPos == floatPos) {
                 number->value = intNumber;
                 number->action = INT_LITERAL;
@@ -231,7 +226,7 @@ unique_ptr<Node> parseExpression(const string& expression, string::size_type& po
                 && parsedExpression.back()->children.empty())) {
                 parsedExpression.push_back(parseOperand(expression, pos));
             } else {
-                parsedExpression.emplace_back(new Node(operatorMap.at(c)));
+                parsedExpression.emplace_back(make_unique<Node>(operatorMap.at(c)));
                 pos++;
             }
         } else {
