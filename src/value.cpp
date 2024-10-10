@@ -1,5 +1,6 @@
 #include "value.h"
 
+#include <format>
 #include <sstream>
 
 using namespace std;
@@ -37,7 +38,7 @@ string toString(const ValueJSON& value) { // NOLINT(*-no-recursion)
         case typeNULL: return "null";
         case STRING: return "\"" + get<string>(value.value) + "\"";
         case INT: return to_string(get<long long>(value.value));
-        case FLOAT: return to_string(get<double>(value.value));
+        case FLOAT: return format("{}", get<double>(value.value)); // to_string does not remove trailing zeroes pre C++26
         case OBJECT: return objectToString(get<unordered_map<string, ValueJSON>>(value.value));
         case ARRAY: return arrayToString(get<vector<ValueJSON>>(value.value));
         case BOOL: {
