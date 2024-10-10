@@ -60,17 +60,6 @@ inline char operatorAssociativity(const NodeAction& c) {
 }
 
 /**
- *
- * @param expression complete string expression
- * @param pos current position in expression
- * @return position with whitespace skipped
- */
-inline string::size_type skipWS(const string& expression, string::size_type pos) {
-    while(iswspace(expression[pos])) pos++;
-    return pos;
-}
-
-/**
  * Extracts the identifier, moves the pos to end of valid identifier.
  * If id is invalid the pos will be at an invalid position
  *
@@ -97,7 +86,7 @@ string parseIdentifier(const string& expression, string::size_type& pos) {
  * @return rest of the path as node
  */
 unique_ptr<Node> parseRestOfPath(const string& expression, string::size_type& pos) { // NOLINT(*-no-recursion)
-    if(pos == expression.size() || iswspace(expression[pos]) || isArithmeticOperator(expression[pos])
+    if(pos == expression.size() || isArithmeticOperator(expression[pos])
         || expression[pos] == ']' || expression[pos] == ',' || expression[pos] == ')') {
         unique_ptr<Node> leaf;
         leaf->action = IDENTIFIER;
@@ -108,7 +97,7 @@ unique_ptr<Node> parseRestOfPath(const string& expression, string::size_type& po
         parent->action = GET_MEMBER;
         const string identifier = parseIdentifier(expression, ++pos);
         const unique_ptr<Node> child = parseRestOfPath(expression, pos);
-        child->identifier = identifier;
+        child->value = identifier;
         parent->children.push_back(move(*child));
         return parent;
     }
@@ -140,15 +129,13 @@ unique_ptr<Node> parseRestOfPath(const string& expression, string::size_type& po
  */
 vector<Node> parseFunction(const string& expression, string::size_type& pos) { // NOLINT(*-no-recursion)
     vector<Node> result;
-    pos = skipWS(expression, pos);
     while(pos < expression.size()) {
         result.push_back(move(*parseExpression(expression, pos)));
-        pos = skipWS(expression, pos);
         if(pos == expression.size())
             throw ExpressionParseException("Missing closing bracket",
                     expression.c_str(), pos);
         if(expression[pos] == ',') {
-            pos = skipWS(expression, ++pos);
+            pos++;
             if(pos == expression.size())
                 throw ExpressionParseException("Missing closing bracket",
                         expression.c_str(), pos);
@@ -178,7 +165,6 @@ unique_ptr<Node> parseOperand(const string& expression, string::size_type& pos) 
 
     while(pos < expression.size() && expression[pos] != ')' && expression[pos] != ',') {
         const char& c = expression[pos];
-        if(iswspace(c)) continue;
         if(isalpha(c) || c == '_' || c == '$') {
             // check if the identifier is actually a function
             if(const string identifier = parseIdentifier(expression, pos);
@@ -189,18 +175,27 @@ unique_ptr<Node> parseOperand(const string& expression, string::size_type& pos) 
                 return func;
             } else {
                 unique_ptr<Node> path = parseRestOfPath(expression, pos);
-                path->identifier = identifier;
+                path->value = identifier;
                 return path;
             }
         }
         if(isdigit(c) || c == '-') {
             //TODO float literals in expression
-            size_t len;
-            const int numberLiteral = stoi(expression.substr(pos), &len);
-            pos += len;
+            size_t intPos;
+            size_t floatPos;
+            const string numberToParse = expression.substr(pos);
+            const long long intNumber = stoll(numberToParse, &intPos);
+            const double floatNumber = stod(numberToParse, &floatPos);
             unique_ptr<Node> number;
-            number->literal = numberLiteral;
-            number->action = NUMBER_LITERAL;
+            if(intPos == floatPos) {
+                number->value = intNumber;
+                number->action = INT_LITERAL;
+            } else {
+                number->value = floatNumber;
+                number->action = FLOAT_LITERAL;
+            }
+            pos += floatPos;
+
             return number;
         }
         throw ExpressionParseException("Unexpected character", expression.c_str(), pos);
@@ -221,7 +216,6 @@ unique_ptr<Node> parseExpression(const string& expression, string::size_type& po
     vector<unique_ptr<Node>> parsedExpression;
 
     int depth = 0;
-    pos = skipWS(expression, pos);
     while(pos < expression.size() && expression[pos] != ']' && expression[pos] != ','
         && (expression[pos] != ')' || depth > 0)) {
         const char& c = expression[pos];
@@ -234,7 +228,7 @@ unique_ptr<Node> parseExpression(const string& expression, string::size_type& po
             pos++;
         } else if(isArithmeticOperator(c)) {
             if(c == '-' && (parsedExpression.empty() || isArithmeticOperator(parsedExpression.back()->action)
-                || parsedExpression.back()->children.empty())) {
+                && parsedExpression.back()->children.empty())) {
                 parsedExpression.push_back(parseOperand(expression, pos));
             } else {
                 parsedExpression.emplace_back(new Node(operatorMap.at(c)));
@@ -243,7 +237,6 @@ unique_ptr<Node> parseExpression(const string& expression, string::size_type& po
         } else {
             parsedExpression.push_back(parseOperand(expression, pos));
         }
-        pos = skipWS(expression, pos);
     }
     if(depth != 0) throw ExpressionParseException("Missing closing brackets", expression.c_str(), pos);
     if(parsedExpression.size() == 1 && !isArithmeticOperator(parsedExpression.front()->action))
@@ -296,8 +289,9 @@ unique_ptr<Node> parseExpression(const string& expression, string::size_type& po
  * @param expression complete string expression
  * @return root node of the expression tree/linked list
  */
-Node parseExpression(const std::string& expression) {
+Node parseExpression(string expression) {
     string::size_type pos = 0;
+    erase_if(expression, [](const unsigned char c){return iswspace(c);});
     return std::move(*parseExpression(expression, pos));
 }
 
@@ -305,7 +299,7 @@ Node parseExpression(const std::string& expression) {
  *
  * @param node node to print
  */
-string toString(Node node) {
+string toString(Node node) { // TODO subscript, other stuff
     stringstream ss;
     stack<pair<int, Node>> stack;
     stack.emplace(0, move(node));
@@ -315,9 +309,10 @@ string toString(Node node) {
         for(int i = 0; i < ident; i++) {
             ss << "    ";
         }
-        if(n.action == NUMBER_LITERAL) ss << n.literal;
-        ss << n.identifier;
-        if(n.subscript != nullptr) ss << '[' << n.subscript->literal << ']';
+        if(n.action == INT_LITERAL) ss << get<long long>(n.value);
+        else if(n.action == FLOAT_LITERAL) ss << get<double>(n.value);
+        else ss << get<string>(n.value);
+        if(n.subscript != nullptr) ss << '[' << ']';
         ss << endl;
         for(Node& c : n.children) {
             // stack.emplace(ident+1, Node(c));

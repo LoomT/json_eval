@@ -9,7 +9,11 @@
  * @param filePath file path of the JSON to parse
  * @return hashmap representation of the JSON file
  */
-std::unordered_map<std::string, ValueJSON> parseJSON(const std::string& filePath);
+std::unordered_map<std::string, ValueJSON> parseFileJSON(const std::string& filePath);
+
+std::unordered_map<std::string, ValueJSON> parseJSON(std::string json);
+
+std::string openFile(const std::string& filePath);
 
 class JSONParseException final : public std::exception {
     std::string message;
