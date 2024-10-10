@@ -50,7 +50,7 @@ ValueJSON getItemFromArray(const unordered_map<string, ValueJSON> &JSON, const N
         throw pathException("Index was out of bounds for array of size " + to_string(array.size()), '[' + to_string(index) + ']');
     ValueJSON arrayItem = array.at(index);
     if(expression.action == ONLY_SUBSCRIPT) return arrayItem;
-    const auto next = expression.children.at(0);
+    const auto& next = expression.children.at(0);
     if(expression.action == GET_MEMBER) {
         if(arrayItem.type != OBJECT) throw pathException("This path should be an object", '[' + to_string(index) + ']');
         const unordered_map<string, ValueJSON> obj = get<unordered_map<string, ValueJSON>>(arrayItem.value);
@@ -219,7 +219,7 @@ ValueJSON executeExpression(const unordered_map<string, ValueJSON>& JSON, const 
             if(!currentObj.contains(identifier)) throw pathException("No such key in JSON", identifier);
             if(currentObj.at(identifier).type != OBJECT) throw pathException("This path should be an object", identifier);
             const unordered_map<string, ValueJSON> obj = get<unordered_map<string, ValueJSON>>(currentObj.at(identifier).value);
-            const auto next = expression.children.at(0);
+            const auto& next = expression.children.at(0);
             try {
                 return executeExpression(JSON, next, obj);
             } catch (pathException& e) {
@@ -232,7 +232,7 @@ ValueJSON executeExpression(const unordered_map<string, ValueJSON>& JSON, const 
             if(!currentObj.contains(identifier)) throw pathException("No such key in JSON", identifier);
             if(currentObj.at(identifier).type != ARRAY) throw pathException("This path should be an array", identifier);
             const vector<ValueJSON> array = get<vector<ValueJSON>>(currentObj.at(identifier).value);
-            const Node next = expression.children.at(0);
+            const Node& next = expression.children.at(0);
 
             try {
                 return getItemFromArray(JSON, next, array);
