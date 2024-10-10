@@ -287,7 +287,9 @@ unique_ptr<Node> parseExpression(const string& expression, string::size_type& po
 Node parseExpression(string expression) {
     string::size_type pos = 0;
     erase_if(expression, [](const unsigned char c){return iswspace(c);});
-    return std::move(*parseExpression(expression, pos));
+    Node result = std::move(*parseExpression(expression, pos));
+    if(pos < expression.size()) throw ExpressionParseException("Unexpected character", expression.c_str(), pos);
+    return result;
 }
 
 /**
