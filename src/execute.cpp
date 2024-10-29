@@ -21,7 +21,7 @@ ValueJSON executeExpression(const unordered_map<string, ValueJSON> &JSON, const 
  * @param expression expression to execute
  * @return evaluated expression on JSON
  */
-inline ValueJSON executeExpression(const unordered_map<string, ValueJSON>& JSON, const Node& expression) { // NOLINT(*-no-recursion)
+ValueJSON executeExpression(const unordered_map<string, ValueJSON>& JSON, const Node& expression) { // NOLINT(*-no-recursion)
     return executeExpression(JSON, expression, JSON);
 }
 
