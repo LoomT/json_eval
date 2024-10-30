@@ -73,6 +73,13 @@ ValueJSON getItemFromArray(const unordered_map<string, ValueJSON> &JSON, const N
     throw executeException("Unexpected action");
 }
 
+
+/**
+ * Extracts the number, casts integer to floating point
+ *
+ * @param number ValueJSON with number inside
+ * @return double
+ */
 inline double extractDouble(const ValueJSON& number) {
     if(number.type == INT)
         return static_cast<double>(get<long long>(number.value));
@@ -149,6 +156,7 @@ ValueJSON getMin(const unordered_map<string, ValueJSON> &JSON, const Node &expre
         exceptionMessage = "Arguments should only be numbers in min function";
     }
 
+    // validate if all values are numbers and at the same time check if there are only integers
     bool onlyIntegers = true;
     for(const ValueJSON& child : values) {
         if(child.type != INT && child.type != FLOAT) throw executeException(exceptionMessage);
@@ -189,15 +197,16 @@ ValueJSON getSize(const unordered_map<string, ValueJSON> &JSON, const Node &expr
     }
 }
 
-pair<ValueJSON, ValueJSON> getOperands(const unordered_map<string, ValueJSON>& JSON, const Node& expression) {
+inline pair<ValueJSON, ValueJSON> getOperands(const unordered_map<string, ValueJSON>& JSON, const Node& expression) {
     if(expression.children.size() != 2) throw executeException("Wrong number of operands for a binary operator");
     ValueJSON a = executeExpression(JSON, expression.children.at(0));
     ValueJSON b = executeExpression(JSON, expression.children.at(1));
     return {a, b};
 }
 
+// TODO refactor ValueJSON a bit by splitting intrinsic functions and operators into their own actions
+// FUNCTION and OPERATOR, and put two enums into variant ValueJSON.value instead because this will become unsustainable
 /**
- *
  * @param JSON entire JSON object
  * @param expression expression to execute
  * @param currentObj current object function is in

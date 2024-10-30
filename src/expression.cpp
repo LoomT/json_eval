@@ -43,20 +43,20 @@ inline int operatorPrecedence(const char& c) {
     if(c == '+' || c == '-') return 1;
     if(c == '*' || c == '/') return 2;
     if(c == '^') return 3;
-    throw invalid_argument("operatorPrecedence error");
+    throw invalid_argument("Not an operator");
 }
 
 inline int operatorPrecedence(const NodeAction& c) {
     if(c == ADD || c == SUBTRACT) return 1;
     if(c == MULTIPLY || c == DIVIDE) return 2;
     if(c == RAISE) return 3;
-    throw invalid_argument("operatorPrecedence error");
+    throw invalid_argument("Not an operator");
 }
 
 inline char operatorAssociativity(const NodeAction& c) {
     if(c == ADD || c == SUBTRACT || c == MULTIPLY || c == DIVIDE) return 'L';
     if(c == RAISE) return 'R';
-    throw invalid_argument("operatorPrecedence error");
+    throw invalid_argument("Not an operator");
 }
 
 /**
@@ -289,6 +289,7 @@ Node parseExpression(string expression) {
 }
 
 /**
+ * FOR DEBUGGING
  *
  * @param node node to print
  */

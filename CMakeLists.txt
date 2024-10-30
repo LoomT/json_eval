@@ -41,6 +41,7 @@ add_executable(tests
         src/execute.h
         src/JSON.h)
 
+# Directory with JSON files used for testing
 target_compile_definitions(tests PUBLIC TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/resources/parseJSON")
 
 target_link_libraries(tests GTest::gtest_main)

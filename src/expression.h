@@ -19,16 +19,7 @@ enum NodeAction {
     SUBTRACT,
     MULTIPLY,
     DIVIDE,
-    RAISE,
-    //TODO implement the following:
-    AND,
-    OR,
-    NOT,
-    EQUAL_TO,
-    MORE_THAN,
-    LESS_THAN,
-    MORE_OR_EQUAL,
-    LESS_OR_EQUAL
+    RAISE // TODO this should be a function pow() since ^ is reserved for xor
 };
 
 struct Node {
