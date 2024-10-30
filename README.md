@@ -15,7 +15,7 @@ Only tested on Windows 11 with GCC compiler
 * Binary should be now somewhere in path/of/repository/root/cmake-build-release
 
 ### Usage
-./json_eval \<json_file> \<expression>
+`./json_eval \<json_file> \<expression>`
 
 \<json_file>: JSON file path
 
@@ -41,14 +41,14 @@ To exit this mode type -x
 
 #### Examples
 
-./json_eval test.json "a.b[1]"
+`./json_eval test.json "a.b[1]"`
 
-./json_eval -k test.json  
-a  
-a.b  
-a.b[1]  
--x
+`./json_eval -k test.json`  
+`a`  
+`a.b`  
+`a.b[1]`  
+`-x`
 
-./json_eval ..\\test2.json "a.b[0] + a.b[ 1 ] * a.b[a.b[0] + a.b[1]][0] / (2^2 * 9 ^ 0.5 / 3 ^ (2-1)) - 0.5"
+`./json_eval ..\\test2.json "a.b[0] + a.b[ 1 ] * a.b[a.b[0] + a.b[1]][0] / (2^2 * 9 ^ 0.5 / 3 ^ (2-1)) - 0.5"`
 
-./json_eval test3.json "max(5, a.b, size(c))"
+`./json_eval test3.json "max(5, a.b, size(c))"`
