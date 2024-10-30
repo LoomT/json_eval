@@ -101,14 +101,11 @@ unique_ptr<Node> parseRestOfPath(const string& expression, string::size_type& po
     }
     if(expression[pos] == '[') {
         auto parent = make_unique<Node>(GET_SUBSCRIPT);
-        Node middle;
+        auto middle = Node(ONLY_SUBSCRIPT);
         middle.subscript = parseExpression(expression, ++pos);
         pos++;
-        if(expression[pos] != '.' && expression[pos] != '[') {
-            middle.action = ONLY_SUBSCRIPT;
-        } else {
+        if(expression[pos] == '.' || expression[pos] == '[') {
             const unique_ptr<Node> leaf = parseRestOfPath(expression, pos);
-
             middle.children = move(leaf->children);
             middle.action = leaf->action;
         }
@@ -181,17 +178,16 @@ unique_ptr<Node> parseOperand(const string& expression, string::size_type& pos) 
             const string numberToParse = expression.substr(pos);
             const long long intNumber = stoll(numberToParse, &intPos);
             const double floatNumber = stod(numberToParse, &floatPos);
-            auto number = make_unique<Node>();
+            pos += floatPos; // number as float cannot be smaller than same number as integer
             if(intPos == floatPos) {
+                auto number = make_unique<Node>(INT_LITERAL);
                 number->value = intNumber;
-                number->action = INT_LITERAL;
+                return number;
             } else {
+                auto number = make_unique<Node>(FLOAT_LITERAL);
                 number->value = floatNumber;
-                number->action = FLOAT_LITERAL;
+                return number;
             }
-            pos += floatPos;
-
-            return number;
         }
         throw ExpressionParseException("Unexpected character", expression.c_str(), pos);
     }

@@ -34,10 +34,8 @@ enum NodeAction {
 struct Node {
     std::variant<long long, double, std::string> value; // could be a number literal or identifier
     NodeAction action;
-    std::unique_ptr<Node> subscript; // this could ideally be a unique pointer
+    std::unique_ptr<Node> subscript;
     std::vector<Node> children; // list for functions with multiple args, otherwise get first
-
-    Node() = default;
 
     explicit Node(const NodeAction& action): action(action) {}
 };
