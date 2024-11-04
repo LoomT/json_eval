@@ -8,6 +8,14 @@
 
 using namespace std;
 
+/**
+ *TODO The reason that parsing and skipping is decoupled is that
+ * I wanted to experiment with multi-threading the JSON parsing
+ * by delegating parsing of larger nested objects or arrays to another thread
+ * while still being able to continue parsing the rest
+ */
+
+
 unordered_map<string, ValueJSON> parseObject(string json);
 ValueJSON parseValue(const string& json);
 
@@ -143,6 +151,7 @@ string parseString(const string& json) {
     for(int i = 1; i < json.size(); i++) {
         if(json[i] == '"') return result.str();
 
+        // escaped character or escape sequence
         if(json[i] == '\\') {
             i++;
             if(i == json.size()) throw JSONParseException("Reached EOF while parsing string");
@@ -314,18 +323,20 @@ unordered_map<string, ValueJSON> parseObject(string json) { // NOLINT(*-no-recur
     if(json[0] != '{') throw JSONParseException("Missing object opening curly brace '{'");
     json = skip(json, 1);
     while(json[0] != '}') {
+        // get key
         const string key = parseString(json);
         if(!isKeyValid(key)) throw JSONParseException(("Invalid key syntax for key " + key).c_str());
         json = skipString(json);
         if(json[0] != ':') throw JSONParseException("Missing ':' between key and value");
         json = skip(json, 1);
+        // get value, try to insert while checking for key uniqueness
         if(ValueJSON value = parseValue(json); !object.insert({key, value}).second)
             throw JSONParseException("Duplicate keys");
         json = skipValue(json);
-        if(json[0] == ',') {
+        if(json[0] == ',') { // another entry expected
             json = skip(json, 1);
             if(json[0] == '}') throw JSONParseException("Unexpected ',' after last value");
-        } else if(json[0] != '}') {
+        } else if(json[0] != '}') { // if no entry expected, expect a closing bracket
             const string message = "Key: " + key + " Error: missing ',' after value";
             throw JSONParseException(message.c_str());
         }

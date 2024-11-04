@@ -204,9 +204,15 @@ inline pair<ValueJSON, ValueJSON> getOperands(const unordered_map<string, ValueJ
     return {a, b};
 }
 
-// TODO refactor ValueJSON a bit by splitting intrinsic functions and operators into their own actions
-// FUNCTION and OPERATOR, and put two enums into variant ValueJSON.value instead because this will become unsustainable
 /**
+ *TODO refactor Node struct by making it class with a method
+ * execute(const unordered_map<string, ValueJSON>& JSON, const unordered_map<string, ValueJSON>& currentObj)
+ * with intrinsic functions and binary operators as abstract subtypes of Node
+ * and make a subtype for each action of NodeAction
+ * then move each case from this method to the corresponding class
+ * would fulfill the open/closed principle by being able to add new intrinsic functions and operators
+ * without having to change any code here and thus not having a massive switch statement
+ *
  * @param JSON entire JSON object
  * @param expression expression to execute
  * @param currentObj current object function is in
